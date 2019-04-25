@@ -1,6 +1,8 @@
 Squirrel Queries Integration for Symfony
 ========================================
 
+[![Build Status](https://img.shields.io/travis/com/squirrelphp/queries-bundle.svg)](https://travis-ci.com/squirrelphp/queries-bundle) [![Software License](https://img.shields.io/badge/license-MIT-success.svg?style=flat-round)](LICENSE) [![Test Coverage](https://api.codeclimate.com/v1/badges/811a4b617f29bd286a75/test_coverage)](https://codeclimate.com/github/squirrelphp/queries-bundle/test_coverage) [![Packagist Version](https://img.shields.io/packagist/v/squirrelphp/queries-bundle.svg?style=flat-round)](https://packagist.org/packages/squirrelphp/queries-bundle)
+
 Integration of [squirrelphp/queries](https://github.com/squirrelphp/queries) into Symfony through service tags and bundle configuration.
 
 Installation
