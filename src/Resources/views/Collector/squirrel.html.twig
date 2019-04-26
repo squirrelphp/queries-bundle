@@ -1,0 +1,240 @@
+{% extends request.isXmlHttpRequest ? '@WebProfiler/Profiler/ajax_layout.html.twig' : '@WebProfiler/Profiler/layout.html.twig' %}
+
+{% import _self as helper %}
+
+{% block toolbar %}
+    {% if collector.querycount > 0 %}
+
+        {% set icon %}
+            {% set status = collector.querycount > 50 ? 'yellow' %}
+
+            {{ include('@SquirrelQueries/Collector/squirrel_icon_grey_adaptive.svg') }}
+
+            <span class="sf-toolbar-value">{{ collector.querycount }}</span>
+            <span class="sf-toolbar-info-piece-additional-detail">
+                <span class="sf-toolbar-label">in</span>
+                <span class="sf-toolbar-value">{{ '%0.2f'|format(collector.time * 1000) }}</span>
+                <span class="sf-toolbar-label">ms</span>
+            </span>
+        {% endset %}
+
+        {% set text %}
+            <div class="sf-toolbar-info-piece">
+                <b>Database Queries</b>
+                <span class="sf-toolbar-status {{ collector.querycount > 50 ? 'sf-toolbar-status-yellow' : '' }}">{{ collector.querycount }}</span>
+            </div>
+            <div class="sf-toolbar-info-piece">
+                <b>Query time</b>
+                <span>{{ '%0.2f'|format(collector.time * 1000) }} ms</span>
+            </div>
+        {% endset %}
+
+        {{ include('@WebProfiler/Profiler/toolbar_item.html.twig', { link: profiler_url, status: status|default('') }) }}
+
+    {% endif %}
+{% endblock %}
+
+{% block menu %}
+        <span class="label {{ collector.querycount == 0 ? 'disabled' }}">
+            <span class="icon">{{ include('@SquirrelQueries/Collector/squirrel_icon_grey_fixed.svg') }}</span>
+            <strong>Squirrel</strong>
+        </span>
+{% endblock %}
+
+{% block panel %}
+    {{ block('queries') }}
+{% endblock %}
+
+{% block queries %}
+    <style>
+        .time-container { position: relative; }
+        .time-container .nowrap { position: relative; z-index: 1; text-shadow: 0 0 2px #fff; }
+        .time-bar { display: block; position: absolute; top: 0; left: 0; bottom: 0; background: #e0e0e0; }
+    </style>
+
+        <h2>Query Metrics</h2>
+
+        <div class="metrics">
+            <div class="metric">
+                <span class="value">{{ collector.querycount }}</span>
+                <span class="label">Database Queries</span>
+            </div>
+
+            <div class="metric">
+                <span class="value">{{ collector.groupedQueryCount }}</span>
+                <span class="label">Different statements</span>
+            </div>
+
+            <div class="metric">
+                <span class="value">{{ '%0.2f'|format(collector.time * 1000) }} ms</span>
+                <span class="label">Query time</span>
+            </div>
+        </div>
+
+    {% set group_queries = request.query.getBoolean('group') %}
+    {% if group_queries %}
+        <h2>Grouped Statements</h2>
+        <p><a href="{{ path('_profiler', { panel: 'squirrel', token: token }) }}">Show all queries</a></p>
+    {% else %}
+        <h2>Queries</h2>
+        <p><a href="{{ path('_profiler', { panel: 'squirrel', token: token, group: true }) }}">Group similar statements</a></p>
+    {% endif %}
+
+    {% for connection, queries in collector.queries %}
+        {% if collector.connections|length > 1 %}
+            <h3>{{ connection }} <small>connection</small></h3>
+        {% endif %}
+
+        {% if queries is empty %}
+            <div class="empty">
+                <p>No database queries were performed.</p>
+            </div>
+        {% else %}
+            {% if group_queries %}
+                {% set queries = collector.groupedQueries[connection] %}
+            {% endif %}
+            <table class="alt queries-table">
+                <thead>
+                <tr>
+                    {% if group_queries %}
+                        <th class="nowrap" onclick="javascript:sortTable(this, 0, 'queries-{{ loop.index }}')" data-sort-direction="1" style="cursor: pointer;">Time<span class="text-muted">&#9660;</span></th>
+                        <th class="nowrap" onclick="javascript:sortTable(this, 1, 'queries-{{ loop.index }}')" style="cursor: pointer;">Count<span></span></th>
+                    {% else %}
+                        <th class="nowrap" onclick="javascript:sortTable(this, 0, 'queries-{{ loop.index }}')" data-sort-direction="-1" style="cursor: pointer;">#<span class="text-muted">&#9650;</span></th>
+                        <th class="nowrap" onclick="javascript:sortTable(this, 1, 'queries-{{ loop.index }}')" style="cursor: pointer;">Time<span></span></th>
+                    {% endif %}
+                    <th style="width: 100%;">Info</th>
+                </tr>
+                </thead>
+                <tbody id="queries-{{ loop.index }}">
+                    {% for i, query in queries %}
+                        {% set i = group_queries ? query.index : i %}
+                        <tr id="queryNo-{{ i }}-{{ loop.parent.loop.index }}">
+                            {% if group_queries %}
+                                <td class="time-container">
+                                    <span class="time-bar" style="width:{{ '%0.2f'|format(query.executionPercent) }}%"></span>
+                                    <span class="nowrap">{{ '%0.2f'|format(query.executionMS * 1000) }}&nbsp;ms<br />({{ '%0.2f'|format(query.executionPercent) }}%)</span>
+                                </td>
+                                <td class="nowrap">{{ query.count }}</td>
+                            {% else %}
+                                <td class="nowrap">{{ loop.index }}</td>
+                                <td class="nowrap">{{ '%0.2f'|format(query.executionMS * 1000) }}&nbsp;ms</td>
+                            {% endif %}
+                            <td>
+                                {{ query.sql|doctrine_pretty_query(highlight_only = true) }}
+
+                                <div>
+                                    <strong class="font-normal text-small">Parameters</strong>: {{ profiler_dump(query.params, 2) }}
+                                </div>
+
+                                <div class="text-small font-normal">
+                                    <a href="#" class="sf-toggle link-inverse" data-toggle-selector="#formatted-query-{{ i }}-{{ loop.parent.loop.index }}" data-toggle-alt-content="Hide formatted query">View formatted query</a>
+
+                                    &nbsp;&nbsp;
+
+                                    <a href="#" class="sf-toggle link-inverse" data-toggle-selector="#original-query-{{ i }}-{{ loop.parent.loop.index }}" data-toggle-alt-content="Hide runnable query">View runnable query</a>
+                                </div>
+
+                                <div id="formatted-query-{{ i }}-{{ loop.parent.loop.index }}" class="sql-runnable hidden">
+                                    {{ query.sql|doctrine_pretty_query }}
+                                </div>
+
+                                <div id="original-query-{{ i }}-{{ loop.parent.loop.index }}" class="sql-runnable hidden">
+                                    {{ (query.sql ~ ';')|doctrine_replace_query_parameters(query.params)|doctrine_pretty_query(highlight_only = true) }}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endfor %}
+
+    <h2>Database Connections</h2>
+
+    {% if not collector.connections %}
+        <div class="empty">
+            <p>There are no configured database connections.</p>
+        </div>
+    {% else %}
+        {{ helper.render_simple_table('Name', 'Service(s)', collector.connections) }}
+    {% endif %}
+
+    <script type="text/javascript">//<![CDATA[
+        function explain(link) {
+            "use strict";
+
+            var targetId = link.getAttribute('data-target-id');
+            var targetElement = document.getElementById(targetId);
+
+            if (targetElement.style.display != 'block') {
+                Sfjs.load(targetId, link.href, null, function(xhr, el) {
+                    el.innerHTML = 'An error occurred while loading the query explanation.';
+                });
+
+                targetElement.style.display = 'block';
+                link.innerHTML = 'Hide query explanation';
+            } else {
+                targetElement.style.display = 'none';
+                link.innerHTML = 'Explain query';
+            }
+
+            return false;
+        }
+
+        function sortTable(header, column, targetId) {
+            "use strict";
+
+            var direction = parseInt(header.getAttribute('data-sort-direction')) || 1,
+                items = [],
+                target = document.getElementById(targetId),
+                rows = target.children,
+                headers = header.parentElement.children,
+                i;
+
+            for (i = 0; i < rows.length; ++i) {
+                items.push(rows[i]);
+            }
+
+            for (i = 0; i < headers.length; ++i) {
+                headers[i].removeAttribute('data-sort-direction');
+                if (headers[i].children.length > 0) {
+                    headers[i].children[0].innerHTML = '';
+                }
+            }
+
+            header.setAttribute('data-sort-direction', (-1*direction).toString());
+            header.children[0].innerHTML = direction > 0 ? '<span class="text-muted">&#9650;</span>' : '<span class="text-muted">&#9660;</span>';
+
+            items.sort(function(a, b) {
+                return direction * (parseFloat(a.children[column].innerHTML) - parseFloat(b.children[column].innerHTML));
+            });
+
+            for (i = 0; i < items.length; ++i) {
+                Sfjs.removeClass(items[i], i % 2 ? 'even' : 'odd');
+                Sfjs.addClass(items[i], i % 2 ? 'odd' : 'even');
+                target.appendChild(items[i]);
+            }
+        }
+
+        //]]></script>
+{% endblock %}
+
+{% macro render_simple_table(label1, label2, data) %}
+    <table>
+        <thead>
+        <tr>
+            <th scope="col" class="key">{{ label1 }}</th>
+            <th scope="col">{{ label2 }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for key, value in data %}
+            <tr>
+                <th scope="row">{{ key }}</th>
+                <td>{{ value }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endmacro %}
