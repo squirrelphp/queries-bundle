@@ -70,7 +70,7 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
     /**
      * @inheritDoc
      */
-    public function fetch(DBSelectQueryInterface $selectQuery) : ?array
+    public function fetch(DBSelectQueryInterface $selectQuery): ?array
     {
         return $this->internalCall(__FUNCTION__, func_get_args());
     }
@@ -78,7 +78,7 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
     /**
      * @inheritDoc
      */
-    public function clear(DBSelectQueryInterface $selectQuery) : void
+    public function clear(DBSelectQueryInterface $selectQuery): void
     {
         $this->internalCall(__FUNCTION__, func_get_args());
     }
@@ -86,7 +86,7 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
     /**
      * @inheritDoc
      */
-    public function fetchOne($query, array $vars = []) : ?array
+    public function fetchOne($query, array $vars = []): ?array
     {
         return $this->internalCall(__FUNCTION__, func_get_args());
     }
@@ -94,7 +94,7 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
     /**
      * @inheritDoc
      */
-    public function fetchAll($query, array $vars = []) : array
+    public function fetchAll($query, array $vars = []): array
     {
         return $this->internalCall(__FUNCTION__, func_get_args());
     }
@@ -102,7 +102,7 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
     /**
      * @inheritDoc
      */
-    public function insert(string $tableName, array $row = []) : int
+    public function insert(string $tableName, array $row = []): int
     {
         return $this->internalCall(__FUNCTION__, func_get_args());
     }
@@ -126,7 +126,7 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
     /**
      * @inheritDoc
      */
-    public function delete(string $tableName, array $where = []) : int
+    public function delete(string $tableName, array $where = []): int
     {
         return $this->internalCall(__FUNCTION__, func_get_args());
     }

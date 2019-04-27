@@ -4,6 +4,8 @@ namespace Squirrel\QueriesBundle\DependencyInjection\Compiler;
 
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Logging\DebugStack;
+use Squirrel\Queries\DBBuilder;
+use Squirrel\Queries\DBBuilderInterface;
 use Squirrel\Queries\DBInterface;
 use Squirrel\Queries\Doctrine\DBErrorHandler;
 use Squirrel\Queries\Doctrine\DBMySQLImplementation;
@@ -48,41 +50,12 @@ class LayersPass implements CompilerPassInterface
 
             // Go through all our tags in the service
             foreach ($tags as $tag) {
-                // Create layered definition
-                $layeredConnectionDefinition = $this->createLayeredConnection(
+                $connectionList[$tag['connectionName']] = $this->createConnectionFromTag(
                     $container,
-                    $this->getBaseImplementation($container, $id, $tag),
+                    $id,
+                    $tag,
                     $taggedServicesOrdered
                 );
-
-                // Set connection service name - relevant if there are multiple connections
-                $container->setDefinition(
-                    'squirrel.connection.' . $tag['connectionName'],
-                    $layeredConnectionDefinition
-                );
-
-                // If this is the default connection we enable DBInterface type hints
-                if (\boolval($tag['isDefault']) === true) {
-                    // Only one default connection can exists, everything else is an error
-                    if ($container->hasDefinition(DBInterface::class)) {
-                        throw new \LogicException(
-                            'You have multiple squirrel default connections - ' .
-                            'make sure you only defined one connection as "default"'
-                        );
-                    }
-
-                    $container->setDefinition(DBInterface::class, $layeredConnectionDefinition);
-                }
-
-                // Keep list of connections if we need them for profiler
-                $connectionList[$tag['connectionName']] = [
-                    'connection' => new Reference('squirrel.connection.' . $tag['connectionName']),
-                    'services' => (
-                    \boolval($tag['isDefault']) === true
-                        ? [DBInterface::class, 'squirrel.connection.' . $tag['connectionName']]
-                        : ['squirrel.connection.' . $tag['connectionName']]
-                    ),
-                ];
             }
         }
 
@@ -90,6 +63,53 @@ class LayersPass implements CompilerPassInterface
         if ($profilerActive === true) {
             $this->createDataCollectorService($container, $connectionList);
         }
+    }
+
+    private function createConnectionFromTag(
+        ContainerBuilder $container,
+        string $id,
+        array $tag,
+        array $taggedServicesOrdered
+    ) {
+        // Create layered definition
+        $layeredConnectionDefinition = $this->createLayeredConnection(
+            $container,
+            $this->getBaseImplementation($container, $id, $tag),
+            $taggedServicesOrdered
+        );
+
+        // Set connection service name - relevant if there are multiple connections
+        $container->setDefinition(
+            'squirrel.connection.' . $tag['connectionName'],
+            $layeredConnectionDefinition
+        );
+
+        // Set query builder service name
+        $builderDefinition = new Definition(DBBuilder::class, [$layeredConnectionDefinition]);
+        $container->setDefinition('squirrel.querybuilder.' . $tag['connectionName'], $builderDefinition);
+
+        // If this is the default connection we enable DBInterface type hints
+        if (\boolval($tag['isDefault']) === true) {
+            // Only one default connection can exists, everything else is an error
+            if ($container->hasDefinition(DBInterface::class)) {
+                throw new \LogicException(
+                    'You have multiple squirrel default connections - ' .
+                    'make sure you only defined one connection as "default"'
+                );
+            }
+
+            $container->setDefinition(DBInterface::class, $layeredConnectionDefinition);
+            $container->setDefinition(DBBuilderInterface::class, $builderDefinition);
+        }
+
+        // Keep list of connections if we need them for profiler
+        return [
+            'connection' => new Reference('squirrel.connection.' . $tag['connectionName']),
+            'services' => ( \boolval($tag['isDefault']) === true
+                ? [DBInterface::class, 'squirrel.connection.' . $tag['connectionName']]
+                : ['squirrel.connection.' . $tag['connectionName']]
+            ),
+        ];
     }
 
     private function createErrorHandlerIfNotSet(ContainerBuilder $container)
@@ -210,7 +230,7 @@ class LayersPass implements CompilerPassInterface
         foreach ($otherLayers as $priority => $entriesForThisPriority) {
             foreach ($entriesForThisPriority as $callData) {
                 // Break up service and attributes
-                [$id, $attributes] = $callData;
+                [$id] = $callData;
 
                 // Get definition for the current service
                 $definition = clone $container->findDefinition(\strval($id));
