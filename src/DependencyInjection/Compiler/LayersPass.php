@@ -87,9 +87,11 @@ class LayersPass implements CompilerPassInterface
         // Set query builder service name
         $builderDefinition = new Definition(DBBuilder::class, [$layeredConnectionDefinition]);
         $container->setDefinition('squirrel.querybuilder.' . $tag['connectionName'], $builderDefinition);
+        // Services associated with this connection
+        $servicesList = ['squirrel.connection.' . $tag['connectionName']];
 
         // If this is the default connection we enable DBInterface type hints
-        if (\boolval($tag['isDefault']) === true) {
+        if (\boolval($tag['isDefault'] ?? false) === true) {
             // Only one default connection can exists, everything else is an error
             if ($container->hasDefinition(DBInterface::class)) {
                 throw new \LogicException(
@@ -100,15 +102,13 @@ class LayersPass implements CompilerPassInterface
 
             $container->setDefinition(DBInterface::class, $layeredConnectionDefinition);
             $container->setDefinition(DBBuilderInterface::class, $builderDefinition);
+            $servicesList[] = DBInterface::class;
         }
 
         // Keep list of connections if we need them for profiler
         return [
             'connection' => new Reference('squirrel.connection.' . $tag['connectionName']),
-            'services' => ( \boolval($tag['isDefault']) === true
-                ? [DBInterface::class, 'squirrel.connection.' . $tag['connectionName']]
-                : ['squirrel.connection.' . $tag['connectionName']]
-            ),
+            'services' => $servicesList,
         ];
     }
 
