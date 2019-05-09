@@ -102,7 +102,7 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
     /**
      * @inheritDoc
      */
-    public function insert(string $tableName, array $row = []): int
+    public function insert(string $tableName, array $row = [], string $autoIncrementIndex = ''): ?string
     {
         return $this->internalCall(__FUNCTION__, func_get_args());
     }
@@ -110,9 +110,13 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
     /**
      * @inheritDoc
      */
-    public function upsert(string $tableName, array $row = [], array $indexColumns = [], array $rowUpdates = []): int
-    {
-        return $this->internalCall(__FUNCTION__, func_get_args());
+    public function insertOrUpdate(
+        string $tableName,
+        array $row = [],
+        array $indexColumns = [],
+        ?array $rowUpdates = null
+    ): void {
+        $this->internalCall(__FUNCTION__, func_get_args());
     }
 
     /**
@@ -135,14 +139,6 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
      * @inheritDoc
      */
     public function change(string $query, array $vars = []): int
-    {
-        return $this->internalCall(__FUNCTION__, func_get_args());
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function lastInsertId($name = null): string
     {
         return $this->internalCall(__FUNCTION__, func_get_args());
     }
