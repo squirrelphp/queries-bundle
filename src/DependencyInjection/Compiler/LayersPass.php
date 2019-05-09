@@ -197,10 +197,22 @@ class LayersPass implements CompilerPassInterface
             return new Definition($tag['connectionType'], [new Reference($serviceId)]);
         }
 
+        $connection = $container->findDefinition($serviceId);
+        $dbalConfig = $connection->getArgument('$param');
+
+        if (!isset($dbalConfig['driverOptions'])) {
+            $dbalConfig['driverOptions'] = [];
+        }
+
+        // Turn off emulation of prepare / query & value separation
+        $dbalConfig['driverOptions'][\PDO::ATTR_EMULATE_PREPARES] = false;
+
         // Default connection type with existing implementation
         switch ($tag['connectionType']) {
             case 'mysql':
                 $implementationClass = DBMySQLImplementation::class;
+                $dbalConfig['driverOptions'][\PDO::MYSQL_ATTR_FOUND_ROWS] = true;
+                $dbalConfig['driverOptions'][\PDO::MYSQL_ATTR_MULTI_STATEMENTS] = false;
                 break;
             case 'pgsql':
                 $implementationClass = DBPostgreSQLImplementation::class;
@@ -215,7 +227,9 @@ class LayersPass implements CompilerPassInterface
                 );
         }
 
-        return new Definition($implementationClass, [new Reference($serviceId)]);
+        $connection->setArgument('$param', $dbalConfig);
+
+        return new Definition($implementationClass, [$connection]);
     }
 
     private function createLayeredConnection(

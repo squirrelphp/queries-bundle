@@ -23,17 +23,18 @@
         "symfony/dependency-injection": "^4.0",
         "symfony/http-kernel": "^4.0",
         "symfony/var-dumper": "^4.0",
-        "squirrelphp/queries": "^0.6",
+        "squirrelphp/queries": "^0.7",
         "jdorn/sql-formatter": "1.2.16"
     },
     "require-dev": {
-        "twig/twig": "^2.0",
+        "phpunit/phpunit": "^8.0",
         "mockery/mockery": "^1.0",
         "phpstan/phpstan": "^0.11.5",
-        "phpunit/phpunit": "^8.0",
-        "squizlabs/php_codesniffer": "^3.0",
+        "squizlabs/php_codesniffer": "^3.2",
         "captainhook/plugin-composer": "^4.0",
-        "slevomat/coding-standard": "^5.0"
+        "diablomedia/phpunit-pretty-printer": "^4.0",
+        "slevomat/coding-standard": "^5.0",
+        "twig/twig": "^2.0"
     },
     "suggest": {
         "squirrelphp/entities-bundle": "Automatic integration of squirrelphp/entities in Symfony"
