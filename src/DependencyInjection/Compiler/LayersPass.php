@@ -198,7 +198,7 @@ class LayersPass implements CompilerPassInterface
         }
 
         $connection = $container->findDefinition($serviceId);
-        $dbalConfig = $connection->getArgument('$param');
+        $dbalConfig = $connection->getArgument('$params');
 
         if (!isset($dbalConfig['driverOptions'])) {
             $dbalConfig['driverOptions'] = [];
@@ -227,7 +227,7 @@ class LayersPass implements CompilerPassInterface
                 );
         }
 
-        $connection->setArgument('$param', $dbalConfig);
+        $connection->setArgument('$params', $dbalConfig);
 
         return new Definition($implementationClass, [$connection]);
     }
