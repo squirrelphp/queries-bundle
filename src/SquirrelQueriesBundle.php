@@ -7,6 +7,9 @@ use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
+/**
+ * @codeCoverageIgnore Just adds one compiler pass to Symfony, there is nothing to test
+ */
 class SquirrelQueriesBundle extends Bundle
 {
     public function build(ContainerBuilder $container)

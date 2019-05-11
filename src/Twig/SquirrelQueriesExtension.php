@@ -9,6 +9,8 @@ use Twig\TwigFilter;
 
 /**
  * This class contains the needed functions in order to do the query highlighting
+ *
+ * @codeCoverageIgnore Mostly similar to Doctrine DBAL Bundle, testing is not worth it
  */
 class SquirrelQueriesExtension extends AbstractExtension
 {

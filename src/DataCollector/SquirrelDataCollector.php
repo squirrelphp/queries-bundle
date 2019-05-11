@@ -10,6 +10,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollector;
 
+/**
+ * @codeCoverageIgnore Mostly similar to Doctrine DBAL DataCollector, testing is not worth it
+ */
 class SquirrelDataCollector extends DataCollector
 {
     /**
