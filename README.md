@@ -33,16 +33,22 @@ Create a Symfony service for each of your Doctrine DBAL connections and tag it w
                     password: "%database_password%"
                     charset:  UTF8
             tags:
-                - { name: squirrel.connection, connectionName: default, connectionType: mysql, isDefault: true }
+                - { name: squirrel.connection, connectionName: somename, connectionType: mysql, isDefault: true }
                 
 You can use any DBAL connection settings, and the service name (`database_connection` in this case) is irrelevant. For the tag, just make sure:
 
 - to use one of the three supported database types as `connectionType`: `mysql` for MySQL/MariaDB, `pgsql` for PostgreSQL, `sqlite` for SQLite
 - set a unique `connectionName` for each tag entry
 
-If you set `isDefault` to true, that connection will be registered as `Squirrel\Queries\DBInterface` which you can then use as a type hint in your services.
+If you set `isDefault` to true, that connection will be registered as `Squirrel\Queries\DBInterface` which you can then use as a type hint in your services. Only one connection can be the default!
 
 If you have multiple connections and need to reference them in your service definitions, you can specifically inject them through the `connectionName` - just prefix it with `squirrel.connection.` to get the correct registered service name. So for a connectionName of `mysql_remote`, the service in Symfony would be called `squirrel.connection.mysql_remote`.
+
+### PDO extra configuration passed to Doctrine
+
+- For all connections, `PDO::ATTR_EMULATE_PREPARES` is set to false, so real query and values separation is enabled instead of emulating it via PDO. You should not notice this in any way, even in terms of performance: it was tested, and when script and database are running in the same network there is no measureable difference. Your script and database would need to be apart by some distance for any possible effect to manifest.
+- For MySQL, `PDO::MYSQL_ATTR_FOUND_ROWS` is set to true, meaning the "affected rows" reported for UPDATE queries are the found rows in the database, even if nothing changed by executing the UPDATE. By default with MySQL you get the "changed" rows, which is a behavior no other database has or even supports, so it is not a good behavior to rely on.
+- For MySQL, `PDO::MYSQL_ATTR_MULTI_STATEMENTS` is set to false, so multiple statements in one query are not possible. When using Squirrel Queries regularly this should make no difference whatsoever (as the library only does one query at a time), but if you do something custom with the Doctrine connection this makes sure you cannot shoot yourself in the foot, as multiple statements per query were a source of security exploits in the past and have little real world relevance.
 
 Adding layers
 -------------
@@ -64,8 +70,3 @@ Symfony Profiler
 ----------------
 
 When using Symfony Profiler this library offers similar integration like the DoctrineBundle automatically - so you can check what queries were sent to the database and how long they took.
-
-More is coming
---------------
-
-For now this is a super minimalistic bundle with no configuration of its own, and no tests. This will probably be changed, although much configuration should not be needed anyway.
