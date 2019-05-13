@@ -23,7 +23,7 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class LayersPass implements CompilerPassInterface
 {
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         // Whether Symfony profiler / toolbar is active
         $profilerActive = ( $container->has('profiler') ? true : false );
@@ -70,7 +70,7 @@ class LayersPass implements CompilerPassInterface
         string $id,
         array $tag,
         array $taggedServicesOrdered
-    ) {
+    ): array {
         // Create layered definition
         $layeredConnectionDefinition = $this->createLayeredConnection(
             $container,
@@ -78,41 +78,41 @@ class LayersPass implements CompilerPassInterface
             $taggedServicesOrdered
         );
 
+        $connectionServiceName = 'squirrel.connection.' . $tag['connectionName'];
+        $builderServiceName = 'squirrel.querybuilder.' . $tag['connectionName'];
+
         // Set connection service name - relevant if there are multiple connections
-        $container->setDefinition(
-            'squirrel.connection.' . $tag['connectionName'],
-            $layeredConnectionDefinition
-        );
+        $container->setDefinition($connectionServiceName, $layeredConnectionDefinition);
 
         // Set query builder service name
-        $builderDefinition = new Definition(DBBuilder::class, [$layeredConnectionDefinition]);
-        $container->setDefinition('squirrel.querybuilder.' . $tag['connectionName'], $builderDefinition);
+        $builderDefinition = new Definition(DBBuilder::class, [new Reference($connectionServiceName)]);
+        $container->setDefinition($builderServiceName, $builderDefinition);
         // Services associated with this connection
-        $servicesList = ['squirrel.connection.' . $tag['connectionName']];
+        $servicesList = [$connectionServiceName];
 
         // If this is the default connection we enable DBInterface type hints
         if (\boolval($tag['isDefault'] ?? false) === true) {
             // Only one default connection can exists, everything else is an error
-            if ($container->hasDefinition(DBInterface::class)) {
+            if ($container->hasAlias(DBInterface::class)) {
                 throw new \LogicException(
                     'You have multiple squirrel default connections - ' .
                     'make sure you only defined one connection as "default"'
                 );
             }
 
-            $container->setDefinition(DBInterface::class, $layeredConnectionDefinition);
-            $container->setDefinition(DBBuilderInterface::class, $builderDefinition);
+            $container->setAlias(DBInterface::class, $connectionServiceName);
+            $container->setAlias(DBBuilderInterface::class, $builderServiceName);
             $servicesList[] = DBInterface::class;
         }
 
         // Keep list of connections if we need them for profiler
         return [
-            'connection' => new Reference('squirrel.connection.' . $tag['connectionName']),
+            'connection' => new Reference($connectionServiceName),
             'services' => $servicesList,
         ];
     }
 
-    private function createErrorHandlerIfNotSet(ContainerBuilder $container)
+    private function createErrorHandlerIfNotSet(ContainerBuilder $container): void
     {
         // If no custom error handler has been defined, we use our default one
         if (!$container->hasDefinition('squirrel.error_handler')) {
@@ -163,8 +163,11 @@ class LayersPass implements CompilerPassInterface
         return $taggedServicesOrdered;
     }
 
-    private function setLoggerIfProfilerActive(ContainerBuilder $container, bool $profilerActive, string $serviceId)
-    {
+    private function setLoggerIfProfilerActive(
+        ContainerBuilder $container,
+        bool $profilerActive,
+        string $serviceId
+    ): void {
         if ($profilerActive === false) {
             return;
         }
@@ -177,7 +180,7 @@ class LayersPass implements CompilerPassInterface
     }
 
     // Get base implementation interacting with Doctrine DBAL connection
-    private function getBaseImplementation(ContainerBuilder $container, string $serviceId, array $tag)
+    private function getBaseImplementation(ContainerBuilder $container, string $serviceId, array $tag): Definition
     {
         // Connection with this name already exists - each connection name has to be unique
         if ($container->hasDefinition('squirrel.connection.' . $tag['connectionName'])) {
@@ -236,7 +239,7 @@ class LayersPass implements CompilerPassInterface
         ContainerBuilder $container,
         Definition $implementationLayer,
         array $otherLayers
-    ) {
+    ): Definition {
         // The very lowest layer is the base implementation
         $topmostLayerDefinition = clone $implementationLayer;
 
@@ -260,7 +263,7 @@ class LayersPass implements CompilerPassInterface
         return $topmostLayerDefinition;
     }
 
-    private function createDataCollectorService(ContainerBuilder $container, array $connectionList)
+    private function createDataCollectorService(ContainerBuilder $container, array $connectionList): void
     {
         $dataCollector = new Definition(SquirrelDataCollector::class, [$connectionList]);
         $dataCollector->addTag('data_collector', [

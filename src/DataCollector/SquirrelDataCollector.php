@@ -26,7 +26,7 @@ class SquirrelDataCollector extends DataCollector
     private $loggers = [];
 
     /**
-     * @var string[]|null
+     * @var array|null
      */
     private $groupedQueries;
 
@@ -51,6 +51,7 @@ class SquirrelDataCollector extends DataCollector
 
             /**
              * @var DebugStack|null $logger Assigned in LayersPass class
+             * @psalm-suppress InternalMethod
              */
             $logger = $doctrineConnection->getConfiguration()->getSQLLogger();
 
@@ -63,7 +64,7 @@ class SquirrelDataCollector extends DataCollector
     /**
      * {@inheritdoc}
      */
-    public function collect(Request $request, Response $response, \Exception $exception = null)
+    public function collect(Request $request, Response $response, \Exception $exception = null): void
     {
         $queries = array();
         foreach ($this->loggers as $name => $logger) {
@@ -93,7 +94,7 @@ class SquirrelDataCollector extends DataCollector
         $this->groupedQueries   = null;
     }
 
-    public function getGroupedQueries()
+    public function getGroupedQueries(): array
     {
         if ($this->groupedQueries !== null) {
             return $this->groupedQueries;
@@ -115,7 +116,7 @@ class SquirrelDataCollector extends DataCollector
                 $connectionGroupedQueries[$key]['count']++;
                 $totalExecutionMS += $query['executionMS'];
             }
-            usort($connectionGroupedQueries, static function ($a, $b) {
+            usort($connectionGroupedQueries, static function (array $a, array $b) {
                 if ($a['executionMS'] === $b['executionMS']) {
                     return 0;
                 }
@@ -135,7 +136,12 @@ class SquirrelDataCollector extends DataCollector
         return $this->groupedQueries;
     }
 
-    private function executionTimePercentage($executionTimeMS, $totalExecutionTimeMS)
+    /**
+     * @param float|int $executionTimeMS
+     * @param float|int $totalExecutionTimeMS
+     * @return float
+     */
+    private function executionTimePercentage($executionTimeMS, $totalExecutionTimeMS): float
     {
         if ($totalExecutionTimeMS === 0.0 || $totalExecutionTimeMS === 0) {
             return 0;
@@ -144,7 +150,7 @@ class SquirrelDataCollector extends DataCollector
         return $executionTimeMS / $totalExecutionTimeMS * 100;
     }
 
-    public function getGroupedQueryCount()
+    public function getGroupedQueryCount(): int
     {
         $count = 0;
         foreach ($this->getGroupedQueries() as $connectionGroupedQueries) {
@@ -154,12 +160,12 @@ class SquirrelDataCollector extends DataCollector
         return $count;
     }
 
-    public function getConnections()
+    public function getConnections(): array
     {
         return $this->data['connections'];
     }
 
-    public function reset()
+    public function reset(): void
     {
         $this->data = [];
 
@@ -169,17 +175,17 @@ class SquirrelDataCollector extends DataCollector
         }
     }
 
-    public function getQueryCount()
+    public function getQueryCount(): int
     {
-        return array_sum(array_map('count', $this->data['queries']));
+        return intval(array_sum(array_map('count', $this->data['queries'])));
     }
 
-    public function getQueries()
+    public function getQueries(): array
     {
         return $this->data['queries'];
     }
 
-    public function getTime()
+    public function getTime(): float
     {
         $time = 0;
         foreach ($this->data['queries'] as $queries) {
@@ -199,7 +205,7 @@ class SquirrelDataCollector extends DataCollector
         return 'squirrel';
     }
 
-    private function sanitizeQueries($connectionName, $queries)
+    private function sanitizeQueries(string $connectionName, array $queries): array
     {
         foreach ($queries as $i => $query) {
             $queries[$i] = $this->sanitizeQuery($connectionName, $query);
@@ -208,7 +214,7 @@ class SquirrelDataCollector extends DataCollector
         return $queries;
     }
 
-    private function sanitizeQuery($connectionName, $query)
+    private function sanitizeQuery(string $connectionName, array $query): array
     {
         $query['explainable'] = true;
         if ($query['params'] === null) {
@@ -228,7 +234,7 @@ class SquirrelDataCollector extends DataCollector
                     $query['types'][$j] = $type->getBindingType();
                     $param = $type->convertToDatabaseValue(
                         $param,
-                        $this->connections[$connectionName]->getConnection()->getDatabasePlatform()
+                        $this->connections[$connectionName]['connection']->getConnection()->getDatabasePlatform()
                     );
                 }
             }

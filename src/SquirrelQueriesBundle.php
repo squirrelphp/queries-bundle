@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  */
 class SquirrelQueriesBundle extends Bundle
 {
-    public function build(ContainerBuilder $container)
+    public function build(ContainerBuilder $container): void
     {
         // Generate decorated database connections with compiler pass
         // Priority (third argument) has to be higher than 0, otherwise ProfilerPass executes before us

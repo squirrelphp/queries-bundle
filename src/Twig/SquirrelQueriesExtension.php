@@ -103,7 +103,7 @@ class SquirrelQueriesExtension extends AbstractExtension
             $isLarger = false;
 
             if (strlen($value) > $maxLength) {
-                $value = wordwrap($value, $maxLength, "\n", true);
+                $value = wordwrap($value, intval(round($maxLength)), "\n", true);
                 $value = explode("\n", $value);
                 $value = $value[0];
 
@@ -253,6 +253,9 @@ class SquirrelQueriesExtension extends AbstractExtension
                 break;
 
             case is_object($result):
+                /**
+                 * @psalm-suppress InvalidCast
+                 */
                 $result = addslashes((string) $result);
                 break;
 
@@ -295,7 +298,10 @@ class SquirrelQueriesExtension extends AbstractExtension
 
         return preg_replace_callback(
             '/\?|((?<!:):[a-z0-9_]+)/i',
-            static function ($matches) use ($parameters, &$i) {
+            /**
+             * @return mixed
+             */
+            static function (array $matches) use ($parameters, &$i) {
                 /**
                  * @var string|bool $key
                  */
@@ -310,6 +316,9 @@ class SquirrelQueriesExtension extends AbstractExtension
                     return $matches[0];
                 }
 
+                /**
+                 * @var string $key
+                 */
                 $value  = array_key_exists($i, $parameters) ? $parameters[$i] : $parameters[$key];
                 $result = self::escapeFunction($value);
                 $i++;

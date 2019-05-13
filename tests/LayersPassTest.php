@@ -5,8 +5,6 @@ namespace Squirrel\QueriesBundle\Tests;
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Logging\DebugStack;
-use Squirrel\Queries\DBBuilderInterface;
-use Squirrel\Queries\DBInterface;
 use Squirrel\Queries\Doctrine\DBErrorHandler;
 use Squirrel\Queries\Doctrine\DBMySQLImplementation;
 use Squirrel\Queries\Doctrine\DBPostgreSQLImplementation;
@@ -58,16 +56,13 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
 
         $this->processCompilerPass($container);
 
-        // error handler + connection + squirrel connection + query builder
-        // + DBInterface + DBBuilderInterface + service container
-        $this->assertEquals(7, \count($container->getDefinitions()));
+        // error handler + connection + squirrel connection + query builder + service container
+        $this->assertEquals(5, \count($container->getDefinitions()));
 
         // Make sure all definitions exist that we expect
         $this->assertTrue($container->hasDefinition('squirrel.error_handler'));
         $this->assertTrue($container->hasDefinition('squirrel.connection.uniquename'));
         $this->assertTrue($container->hasDefinition('squirrel.querybuilder.uniquename'));
-        $this->assertTrue($container->hasDefinition(DBInterface::class));
-        $this->assertTrue($container->hasDefinition(DBBuilderInterface::class));
 
         // Make sure topmost layer is the error handler
         $squirrelConnection = $container->getDefinition('squirrel.connection.uniquename');
