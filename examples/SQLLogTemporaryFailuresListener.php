@@ -122,7 +122,7 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
     /**
      * @inheritDoc
      */
-    public function update(array $query): int
+    public function update(string $tableName, array $changes, array $where = []): int
     {
         return $this->internalCall(__FUNCTION__, func_get_args());
     }
