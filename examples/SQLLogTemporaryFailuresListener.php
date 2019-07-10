@@ -5,7 +5,7 @@ namespace Squirrel\QueriesBundle\Examples;
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\DBAL\Exception\RetryableException;
 use Psr\Log\LoggerInterface;
-use Squirrel\Queries\DBDebug;
+use Squirrel\Debug\Debug;
 use Squirrel\Queries\DBPassToLowerLayerTrait;
 use Squirrel\Queries\DBRawInterface;
 use Squirrel\Queries\DBSelectQueryInterface;
@@ -46,14 +46,14 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
             return $this->lowerLayer->$name(...$arguments);
         } catch (RetryableException $e) {
             $this->logger->info(
-                'Deadlock occured for ' . DBDebug::sanitizeData($name) .
-                '->(' . DBDebug::sanitizeArguments($arguments) . '): ' . $e->getMessage()
+                'Deadlock occured for ' . Debug::sanitizeData($name) .
+                '->(' . Debug::sanitizeArguments($arguments) . '): ' . $e->getMessage()
             );
             throw $e;
         } catch (ConnectionException $e) {
             $this->logger->info(
-                'Connection problem occured for ' . DBDebug::sanitizeData($name) .
-                '->(' . DBDebug::sanitizeArguments($arguments) . '): ' . $e->getMessage()
+                'Connection problem occured for ' . Debug::sanitizeData($name) .
+                '->(' . Debug::sanitizeArguments($arguments) . '): ' . $e->getMessage()
             );
             throw $e;
         }

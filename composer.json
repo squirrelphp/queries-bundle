@@ -23,13 +23,12 @@
         "symfony/dependency-injection": "^4.0",
         "symfony/http-kernel": "^4.0",
         "symfony/var-dumper": "^4.0",
-        "squirrelphp/queries": "^0.8",
+        "squirrelphp/queries": "^0.9",
         "jdorn/sql-formatter": "1.2.16"
     },
     "require-dev": {
         "captainhook/plugin-composer": "^4.0",
         "diablomedia/phpunit-pretty-printer": "^4.0",
-        "mockery/mockery": "^1.0",
         "phpstan/phpstan": "^0.11.5",
         "phpunit/phpunit": "^8.0",
         "slevomat/coding-standard": "^5.0",
@@ -56,9 +55,11 @@
     },
     "scripts": {
         "phpstan": "vendor/bin/phpstan analyse src examples --level=7",
-        "psalm": "vendor/bin/psalm",
+        "psalm": "vendor/bin/psalm --show-info=false",
+        "psalm_base": "vendor/bin/psalm --set-baseline=psalm-baseline.xml",
         "phpunit": "vendor/bin/phpunit --colors=always",
         "phpcs": "vendor/bin/phpcs --standard=ruleset.xml --extensions=php src tests examples",
+        "phpcsfix": "vendor/bin/phpcbf --standard=ruleset.xml --extensions=php src tests examples",
         "codecoverage": "vendor/bin/phpunit --coverage-html tests/_reports"
     }
 }
