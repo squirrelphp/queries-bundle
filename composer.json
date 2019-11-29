@@ -8,7 +8,9 @@
         "pgsql",
         "sqlite",
         "database",
-        "abstraction"
+        "abstraction",
+        "symfony",
+        "bundle"
     ],
     "homepage": "https://github.com/squirrelphp/queries-bundle",
     "license": "MIT",
@@ -20,21 +22,16 @@
     ],
     "require": {
         "php": "^7.2",
-        "symfony/dependency-injection": "^4.0",
-        "symfony/http-kernel": "^4.0",
-        "symfony/var-dumper": "^4.0",
+        "symfony/dependency-injection": "^5.0",
+        "symfony/http-kernel": "^5.0",
+        "symfony/var-dumper": "^5.0",
         "squirrelphp/queries": "^0.9",
         "jdorn/sql-formatter": "1.2.16"
     },
     "require-dev": {
+        "bamarni/composer-bin-plugin": "^1.3",
         "captainhook/plugin-composer": "^4.0",
-        "diablomedia/phpunit-pretty-printer": "^4.0",
-        "phpstan/phpstan": "^0.11.5",
-        "phpunit/phpunit": "^8.0",
-        "slevomat/coding-standard": "^5.0",
-        "squizlabs/php_codesniffer": "^3.2",
-        "twig/twig": "^2.0",
-        "vimeo/psalm": "^3.2"
+        "twig/twig": "^2.0"
     },
     "suggest": {
         "squirrelphp/entities-bundle": "Automatic integration of squirrelphp/entities in Symfony"
@@ -54,6 +51,9 @@
         }
     },
     "scripts": {
+        "bin": "echo 'bin not installed'",
+        "post-install-cmd": ["@composer bin all install --ansi"],
+        "post-update-cmd": ["@composer bin all update --ansi"],
         "phpstan": "vendor/bin/phpstan analyse src examples --level=7",
         "psalm": "vendor/bin/psalm --show-info=false",
         "psalm_base": "vendor/bin/psalm --set-baseline=psalm-baseline.xml",
