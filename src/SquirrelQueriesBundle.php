@@ -23,5 +23,6 @@ class SquirrelQueriesBundle extends Bundle
     public function getContainerExtension()
     {
         // No container extension needed
+        return null;
     }
 }
