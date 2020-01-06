@@ -16,10 +16,10 @@ before_script:
     - ./cc-test-reporter before-build
 
 script:
-    - vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml
-    - vendor/bin/phpstan analyse src examples --level=7
-    - vendor/bin/psalm
-    - vendor/bin/phpcs --standard=psr2 --extensions=php src tests examples
+    - composer phpunit_clover
+    - composer phpstan
+    - composer psalm
+    - composer phpcs
     - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then ./cc-test-reporter after-build  -t clover --exit-code $TRAVIS_TEST_RESULT; fi
 
 notifications:
