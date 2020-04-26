@@ -18,21 +18,18 @@ class SquirrelDataCollector extends DataCollector
     /**
      * @var array List of data about the squirrel connections
      */
-    private $connections;
+    private array $connections;
 
     /**
      * @var DebugStack[]
      */
-    private $loggers = [];
+    private array $loggers = [];
 
     /**
      * @var array|null
      */
-    private $groupedQueries;
+    private ?array $groupedQueries = null;
 
-    /**
-     * @param array $squirrelConnections
-     */
     public function __construct(array $squirrelConnections)
     {
         $this->connections = $squirrelConnections;
@@ -61,9 +58,6 @@ class SquirrelDataCollector extends DataCollector
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function collect(Request $request, Response $response, \Throwable $exception = null): void
     {
         $queries = array();
@@ -75,7 +69,7 @@ class SquirrelDataCollector extends DataCollector
 
         // Key = defined connection name, value = list of services to access the connection
         foreach ($this->connections as $name => $details) {
-            $connectionNames[$name] = '"' . implode('", "', $details['services']) . '"';
+            $connectionNames[$name] = '"' . \implode('", "', $details['services']) . '"';
         }
 
         $this->data = array(
@@ -116,7 +110,7 @@ class SquirrelDataCollector extends DataCollector
                 $connectionGroupedQueries[$key]['count']++;
                 $totalExecutionMS += $query['executionMS'];
             }
-            usort($connectionGroupedQueries, static function (array $a, array $b) {
+            \usort($connectionGroupedQueries, static function (array $a, array $b) {
                 if ($a['executionMS'] === $b['executionMS']) {
                     return 0;
                 }
@@ -136,14 +130,9 @@ class SquirrelDataCollector extends DataCollector
         return $this->groupedQueries;
     }
 
-    /**
-     * @param float|int $executionTimeMS
-     * @param float|int $totalExecutionTimeMS
-     * @return float
-     */
-    private function executionTimePercentage($executionTimeMS, $totalExecutionTimeMS): float
+    private function executionTimePercentage(float $executionTimeMS, float $totalExecutionTimeMS): float
     {
-        if ($totalExecutionTimeMS === 0.0 || $totalExecutionTimeMS === 0) {
+        if ($totalExecutionTimeMS < PHP_FLOAT_EPSILON) {
             return 0;
         }
 
@@ -154,7 +143,7 @@ class SquirrelDataCollector extends DataCollector
     {
         $count = 0;
         foreach ($this->getGroupedQueries() as $connectionGroupedQueries) {
-            $count += count($connectionGroupedQueries);
+            $count += \count($connectionGroupedQueries);
         }
 
         return $count;
@@ -177,7 +166,7 @@ class SquirrelDataCollector extends DataCollector
 
     public function getQueryCount(): int
     {
-        return intval(array_sum(array_map('count', $this->data['queries'])));
+        return \intval(\array_sum(\array_map('count', $this->data['queries'])));
     }
 
     public function getQueries(): array
@@ -197,9 +186,6 @@ class SquirrelDataCollector extends DataCollector
         return $time;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getName()
     {
         return 'squirrel';
@@ -256,16 +242,15 @@ class SquirrelDataCollector extends DataCollector
      * value to explain the query).
      *
      * @param mixed $var
-     * @return array
      */
     private function sanitizeParam($var): array
     {
         if (\is_object($var)) {
             $className = \get_class($var);
 
-            return method_exists($var, '__toString') ?
-                array(sprintf('/* Object(%s): */"%s"', $className, $var->__toString()), false) :
-                array(sprintf('/* Object(%s) */', $className), false);
+            return \method_exists($var, '__toString') ?
+                array(\sprintf('/* Object(%s): */"%s"', $className, $var->__toString()), false) :
+                array(\sprintf('/* Object(%s) */', $className), false);
         }
 
         if (\is_array($var)) {
@@ -281,7 +266,7 @@ class SquirrelDataCollector extends DataCollector
         }
 
         if (\is_resource($var)) {
-            return array(sprintf('/* Resource(%s) */', get_resource_type($var)), false);
+            return array(\sprintf('/* Resource(%s) */', \get_resource_type($var)), false);
         }
 
         return array($var, true);

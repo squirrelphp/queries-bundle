@@ -11,7 +11,4 @@
             <directory name="vendor" />
         </ignoreFiles>
     </projectFiles>
-
-    <issueHandlers>
-    </issueHandlers>
 </psalm>

@@ -26,7 +26,7 @@ class LayersPass implements CompilerPassInterface
     public function process(ContainerBuilder $container): void
     {
         // Whether Symfony profiler / toolbar is active
-        $profilerActive = ( $container->has('profiler') ? true : false );
+        $profilerActive = $container->has('profiler');
 
         // If no custom error handler has been defined, we use our default one
         $this->createErrorHandlerIfNotSet($container);

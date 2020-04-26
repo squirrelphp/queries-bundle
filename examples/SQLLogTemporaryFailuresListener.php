@@ -22,10 +22,7 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
     // Default implementation of all DBRawInterface functions - pass to lower layer
     use DBPassToLowerLayerTrait;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
     public function __construct(LoggerInterface $logger)
     {
@@ -36,8 +33,6 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
      * Look for deadlocks and connection exceptions, log the exact function and arguments
      * and then rethrow the exception to the error handler so it can be repeated
      *
-     * @param string $name
-     * @param array $arguments
      * @return mixed
      */
     protected function internalCall(string $name, array $arguments)
@@ -59,87 +54,62 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
         }
     }
 
-    /**
-     * @inheritDoc
-     */
     public function select($query, array $vars = []): DBSelectQueryInterface
     {
-        return $this->internalCall(__FUNCTION__, func_get_args());
+        return $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
-    /**
-     * @inheritDoc
-     */
     public function fetch(DBSelectQueryInterface $selectQuery): ?array
     {
-        return $this->internalCall(__FUNCTION__, func_get_args());
+        return $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
-    /**
-     * @inheritDoc
-     */
     public function clear(DBSelectQueryInterface $selectQuery): void
     {
-        $this->internalCall(__FUNCTION__, func_get_args());
+        $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
-    /**
-     * @inheritDoc
-     */
     public function fetchOne($query, array $vars = []): ?array
     {
-        return $this->internalCall(__FUNCTION__, func_get_args());
+        return $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
-    /**
-     * @inheritDoc
-     */
     public function fetchAll($query, array $vars = []): array
     {
-        return $this->internalCall(__FUNCTION__, func_get_args());
+        return $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
-    /**
-     * @inheritDoc
-     */
+    public function fetchAllAndFlatten($query, array $vars = []): array
+    {
+        return $this->internalCall(__FUNCTION__, \func_get_args());
+    }
+
     public function insert(string $tableName, array $row = [], string $autoIncrementIndex = ''): ?string
     {
-        return $this->internalCall(__FUNCTION__, func_get_args());
+        return $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
-    /**
-     * @inheritDoc
-     */
     public function insertOrUpdate(
         string $tableName,
         array $row = [],
         array $indexColumns = [],
         ?array $rowUpdates = null
     ): void {
-        $this->internalCall(__FUNCTION__, func_get_args());
+        $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
-    /**
-     * @inheritDoc
-     */
     public function update(string $tableName, array $changes, array $where = []): int
     {
-        return $this->internalCall(__FUNCTION__, func_get_args());
+        return $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
-    /**
-     * @inheritDoc
-     */
     public function delete(string $tableName, array $where = []): int
     {
-        return $this->internalCall(__FUNCTION__, func_get_args());
+        return $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
-    /**
-     * @inheritDoc
-     */
     public function change(string $query, array $vars = []): int
     {
-        return $this->internalCall(__FUNCTION__, func_get_args());
+        return $this->internalCall(__FUNCTION__, \func_get_args());
     }
 }
