@@ -54,7 +54,7 @@ class LayersPass implements CompilerPassInterface
                     $container,
                     $id,
                     $tag,
-                    $taggedServicesOrdered
+                    $taggedServicesOrdered,
                 );
             }
         }
@@ -75,7 +75,7 @@ class LayersPass implements CompilerPassInterface
         $layeredConnectionDefinition = $this->createLayeredConnection(
             $container,
             $this->getBaseImplementation($container, $id, $tag),
-            $taggedServicesOrdered
+            $taggedServicesOrdered,
         );
 
         $connectionServiceName = 'squirrel.connection.' . $tag['connectionName'];
@@ -96,7 +96,7 @@ class LayersPass implements CompilerPassInterface
             if ($container->hasAlias(DBInterface::class)) {
                 throw new \LogicException(
                     'You have multiple squirrel default connections - ' .
-                    'make sure you only defined one connection as "default"'
+                    'make sure you only defined one connection as "default"',
                 );
             }
 
@@ -186,7 +186,7 @@ class LayersPass implements CompilerPassInterface
         if ($container->hasDefinition('squirrel.connection.' . $tag['connectionName'])) {
             throw new \LogicException(
                 'You have multiple squirrel connections with same name - ' .
-                'make sure to have unique connection names'
+                'make sure to have unique connection names',
             );
         }
 
@@ -226,7 +226,7 @@ class LayersPass implements CompilerPassInterface
             default:
                 throw new \InvalidArgumentException(
                     'Only MySQL, Postgres and SQLite are currently supported by squirrel, ' .
-                    'yet you have specified none of those as the connection type.'
+                    'yet you have specified none of those as the connection type.',
                 );
         }
 

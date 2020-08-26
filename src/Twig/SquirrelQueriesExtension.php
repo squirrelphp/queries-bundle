@@ -296,7 +296,7 @@ class SquirrelQueriesExtension extends AbstractExtension
 
                 return $result;
             },
-            $query
+            $query,
         ) ?? '';
     }
 

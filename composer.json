@@ -21,12 +21,12 @@
         }
     ],
     "require": {
-        "php": "^7.4",
+        "php": ">=7.4",
         "ext-pdo": "*",
         "symfony/dependency-injection": "^5.0",
         "symfony/http-kernel": "^5.0",
         "symfony/var-dumper": "^5.0",
-        "squirrelphp/queries": "^0.10",
+        "squirrelphp/queries": "^0.11",
         "jdorn/sql-formatter": "1.2.17"
     },
     "require-dev": {

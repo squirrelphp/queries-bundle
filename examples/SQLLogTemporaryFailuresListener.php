@@ -42,13 +42,13 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
         } catch (RetryableException $e) {
             $this->logger->info(
                 'Deadlock occured for ' . Debug::sanitizeData($name) .
-                '->(' . Debug::sanitizeArguments($arguments) . '): ' . $e->getMessage()
+                '->(' . Debug::sanitizeArguments($arguments) . '): ' . $e->getMessage(),
             );
             throw $e;
         } catch (ConnectionException $e) {
             $this->logger->info(
                 'Connection problem occured for ' . Debug::sanitizeData($name) .
-                '->(' . Debug::sanitizeArguments($arguments) . '): ' . $e->getMessage()
+                '->(' . Debug::sanitizeArguments($arguments) . '): ' . $e->getMessage(),
             );
             throw $e;
         }

@@ -1,7 +1,7 @@
 Squirrel Queries Integration for Symfony
 ========================================
 
-[![Build Status](https://img.shields.io/travis/com/squirrelphp/queries-bundle.svg)](https://travis-ci.com/squirrelphp/queries-bundle) [![Test Coverage](https://api.codeclimate.com/v1/badges/811a4b617f29bd286a75/test_coverage)](https://codeclimate.com/github/squirrelphp/queries-bundle/test_coverage) ![PHPStan](https://img.shields.io/badge/style-level%207-success.svg?style=flat-round&label=phpstan) [![Packagist Version](https://img.shields.io/packagist/v/squirrelphp/queries-bundle.svg?style=flat-round)](https://packagist.org/packages/squirrelphp/queries-bundle) [![PHP Version](https://img.shields.io/packagist/php-v/squirrelphp/queries-bundle.svg)](https://packagist.org/packages/squirrelphp/queries-bundle) [![Software License](https://img.shields.io/badge/license-MIT-success.svg?style=flat-round)](LICENSE)
+[![Build Status](https://img.shields.io/travis/com/squirrelphp/queries-bundle.svg)](https://travis-ci.com/squirrelphp/queries-bundle) [![Test Coverage](https://api.codeclimate.com/v1/badges/811a4b617f29bd286a75/test_coverage)](https://codeclimate.com/github/squirrelphp/queries-bundle/test_coverage) ![PHPStan](https://img.shields.io/badge/style-level%208-success.svg?style=flat-round&label=phpstan) [![Packagist Version](https://img.shields.io/packagist/v/squirrelphp/queries-bundle.svg?style=flat-round)](https://packagist.org/packages/squirrelphp/queries-bundle) [![PHP Version](https://img.shields.io/packagist/php-v/squirrelphp/queries-bundle.svg)](https://packagist.org/packages/squirrelphp/queries-bundle) [![Software License](https://img.shields.io/badge/license-MIT-success.svg?style=flat-round)](LICENSE)
 
 Integration of [squirrelphp/queries](https://github.com/squirrelphp/queries) into Symfony through service tags and bundle configuration.
 
@@ -34,7 +34,7 @@ Create a Symfony service for each of your Doctrine DBAL connections and tag it w
                     charset:  UTF8
             tags:
                 - { name: squirrel.connection, connectionName: somename, connectionType: mysql, isDefault: true }
-                
+
 You can use any DBAL connection settings, and the service name (`database_connection` in this case) is irrelevant. For the tag, just make sure:
 
 - to use one of the three supported database types as `connectionType`: `mysql` for MySQL/MariaDB, `pgsql` for PostgreSQL, `sqlite` for SQLite
@@ -63,7 +63,7 @@ Example for the service definition of a logger which logs deadlocks / connection
         Squirrel\QueriesBundle\Examples\SQLLogTemporaryFailuresListener:
             tags:
                 - { name: squirrel.layer, priority: -250 }
-    
+
 Because the priority is below zero it is a layer beneath the error handler. You can find a possible implementation in the examples directory.
 
 Symfony Profiler

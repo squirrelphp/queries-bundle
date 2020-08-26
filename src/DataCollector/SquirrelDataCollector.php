@@ -58,7 +58,7 @@ class SquirrelDataCollector extends DataCollector
         }
     }
 
-    public function collect(Request $request, Response $response, \Throwable $exception = null): void
+    public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
     {
         $queries = array();
         foreach ($this->loggers as $name => $logger) {
@@ -220,12 +220,12 @@ class SquirrelDataCollector extends DataCollector
                     $query['types'][$j] = $type->getBindingType();
                     $param = $type->convertToDatabaseValue(
                         $param,
-                        $this->connections[$connectionName]['connection']->getConnection()->getDatabasePlatform()
+                        $this->connections[$connectionName]['connection']->getConnection()->getDatabasePlatform(),
                     );
                 }
             }
 
-            list($query['params'][$j], $explainable) = $this->sanitizeParam($param);
+            [$query['params'][$j], $explainable] = $this->sanitizeParam($param);
             if (!$explainable) {
                 $query['explainable'] = false;
             }
@@ -257,7 +257,7 @@ class SquirrelDataCollector extends DataCollector
             $a = array();
             $original = true;
             foreach ($var as $k => $v) {
-                list($value, $orig) = $this->sanitizeParam($v);
+                [$value, $orig] = $this->sanitizeParam($v);
                 $original = $original && $orig;
                 $a[$k] = $value;
             }
