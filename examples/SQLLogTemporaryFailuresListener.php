@@ -22,20 +22,15 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
     // Default implementation of all DBRawInterface functions - pass to lower layer
     use DBPassToLowerLayerTrait;
 
-    private LoggerInterface $logger;
-
-    public function __construct(LoggerInterface $logger)
+    public function __construct(private LoggerInterface $logger)
     {
-        $this->logger = $logger;
     }
 
     /**
      * Look for deadlocks and connection exceptions, log the exact function and arguments
      * and then rethrow the exception to the error handler so it can be repeated
-     *
-     * @return mixed
      */
-    protected function internalCall(string $name, array $arguments)
+    protected function internalCall(string $name, array $arguments): mixed
     {
         try {
             return $this->lowerLayer->$name(...$arguments);
@@ -84,26 +79,26 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
         return $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
-    public function insert(string $tableName, array $row = [], string $autoIncrementIndex = ''): ?string
+    public function insert(string $table, array $row = [], string $autoIncrement = ''): ?string
     {
         return $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
     public function insertOrUpdate(
-        string $tableName,
+        string $table,
         array $row = [],
-        array $indexColumns = [],
-        ?array $rowUpdates = null
+        array $index = [],
+        ?array $update = null,
     ): void {
         $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
-    public function update(string $tableName, array $changes, array $where = []): int
+    public function update(string $table, array $changes, array $where = []): int
     {
         return $this->internalCall(__FUNCTION__, \func_get_args());
     }
 
-    public function delete(string $tableName, array $where = []): int
+    public function delete(string $table, array $where = []): int
     {
         return $this->internalCall(__FUNCTION__, \func_get_args());
     }

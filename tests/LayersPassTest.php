@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\Reference;
 
 class LayersPassTest extends \PHPUnit\Framework\TestCase
 {
-    public function testNoConnections()
+    public function testNoConnections(): void
     {
         $container = new ContainerBuilder();
 
@@ -30,7 +30,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(2, \count($container->getDefinitions())); // error handler + service container
     }
 
-    public function testOneMySQLConnectionAsDefault()
+    public function testOneMySQLConnectionAsDefault(): void
     {
         $container = new ContainerBuilder();
 
@@ -97,7 +97,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(1, \count($doctrineArguments));
     }
 
-    public function testOneMySQLConnectionNotDefault()
+    public function testOneMySQLConnectionNotDefault(): void
     {
         $container = new ContainerBuilder();
 
@@ -131,7 +131,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue($container->hasDefinition('squirrel.querybuilder.greatname'));
     }
 
-    public function testOnePostgresConnection()
+    public function testOnePostgresConnection(): void
     {
         $container = new ContainerBuilder();
 
@@ -195,7 +195,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(1, \count($doctrineArguments));
     }
 
-    public function testOneSQLiteConnection()
+    public function testOneSQLiteConnection(): void
     {
         $container = new ContainerBuilder();
 
@@ -255,7 +255,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(1, \count($doctrineArguments));
     }
 
-    public function testProfilerChanges()
+    public function testProfilerChanges(): void
     {
         $container = new ContainerBuilder();
 
@@ -324,7 +324,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($configuration, $doctrineArguments['$config']);
     }
 
-    public function testOneAddedLayer()
+    public function testOneAddedLayer(): void
     {
         $container = new ContainerBuilder();
 
@@ -374,7 +374,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(DBErrorHandler::class, $methodCalls[0][1][0]->getClass());
     }
 
-    public function testMultipleAddedLayers()
+    public function testMultipleAddedLayers(): void
     {
         $container = new ContainerBuilder();
 
@@ -459,7 +459,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(DBMySQLImplementation::class, $methodCalls[0][1][0]->getClass());
     }
 
-    public function testOwnImplementationService()
+    public function testOwnImplementationService(): void
     {
         $container = new ContainerBuilder();
 
@@ -507,7 +507,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals([], $methodCalls[0][1][0]->getArguments());
     }
 
-    public function testOwnImplementationClass()
+    public function testOwnImplementationClass(): void
     {
         $container = new ContainerBuilder();
 
@@ -551,7 +551,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals([new Reference('sqlite_connection')], $methodCalls[0][1][0]->getArguments());
     }
 
-    public function testMultipleConnectionsWithSameName()
+    public function testMultipleConnectionsWithSameName(): void
     {
         $this->expectException(\LogicException::class);
 
@@ -593,7 +593,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->processCompilerPass($container);
     }
 
-    public function testMultipleDefaultConnections()
+    public function testMultipleDefaultConnections(): void
     {
         $this->expectException(\LogicException::class);
 
@@ -637,7 +637,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->processCompilerPass($container);
     }
 
-    public function testUnknownImplementation()
+    public function testUnknownImplementation(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
@@ -664,7 +664,7 @@ class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->processCompilerPass($container);
     }
 
-    protected function processCompilerPass(ContainerBuilder $container)
+    protected function processCompilerPass(ContainerBuilder $container): void
     {
         (new LayersPass())->process($container);
     }

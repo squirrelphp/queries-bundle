@@ -200,10 +200,8 @@ class SquirrelQueriesExtension extends AbstractExtension
      * DON'T USE THIS FUNCTION OUTSIDE ITS INTENDED SCOPE
      *
      * @internal
-     *
-     * @param mixed $parameter
      */
-    public static function escapeFunction($parameter): string
+    public static function escapeFunction(mixed $parameter): string
     {
         $result = $parameter;
 
@@ -246,19 +244,13 @@ class SquirrelQueriesExtension extends AbstractExtension
 
     /**
      * Return a query with the parameters replaced
-     *
-     * @param array|Data $parameters
      */
-    public function replaceQueryParameters(string $query, $parameters): string
+    public function replaceQueryParameters(string $query, array|Data $parameters): string
     {
         if ($parameters instanceof Data) {
+            /** @var array $parameters */
             $parameters = $parameters->getValue(true);
         }
-
-        /**
-         * @var array $parameters Set specific type so PHPStan (and other linters) know the correct type
-         */
-        $parameters = $parameters;
 
         $i = 0;
 

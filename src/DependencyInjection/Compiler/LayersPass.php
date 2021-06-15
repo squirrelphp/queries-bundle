@@ -69,7 +69,7 @@ class LayersPass implements CompilerPassInterface
         ContainerBuilder $container,
         string $id,
         array $tag,
-        array $taggedServicesOrdered
+        array $taggedServicesOrdered,
     ): array {
         // Create layered definition
         $layeredConnectionDefinition = $this->createLayeredConnection(
@@ -166,7 +166,7 @@ class LayersPass implements CompilerPassInterface
     private function setLoggerIfProfilerActive(
         ContainerBuilder $container,
         bool $profilerActive,
-        string $serviceId
+        string $serviceId,
     ): void {
         if ($profilerActive === false) {
             return;
@@ -238,7 +238,7 @@ class LayersPass implements CompilerPassInterface
     private function createLayeredConnection(
         ContainerBuilder $container,
         Definition $implementationLayer,
-        array $otherLayers
+        array $otherLayers,
     ): Definition {
         // The very lowest layer is the base implementation
         $topmostLayerDefinition = clone $implementationLayer;

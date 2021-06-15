@@ -186,7 +186,7 @@ class SquirrelDataCollector extends DataCollector
         return $time;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return 'squirrel';
     }
@@ -240,10 +240,8 @@ class SquirrelDataCollector extends DataCollector
      * The return value is an array with the sanitized value and a boolean
      * indicating if the original value was kept (allowing to use the sanitized
      * value to explain the query).
-     *
-     * @param mixed $var
      */
-    private function sanitizeParam($var): array
+    private function sanitizeParam(mixed $var): array
     {
         if (\is_object($var)) {
             $className = \get_class($var);
