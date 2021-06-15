@@ -2,6 +2,7 @@ env:
     global:
         - CC_TEST_REPORTER_ID=fcffe2c20196bade80e568d015d18caa414cc49a8269d60bd1d54d5b8b229504
         - GIT_COMMITTED_AT=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then git log -1 --pretty=format:%ct; else git log -1 --skip 1 --pretty=format:%ct; fi)
+        - XDEBUG_MODE=coverage
 language: php
 php:
     - '8.0'
