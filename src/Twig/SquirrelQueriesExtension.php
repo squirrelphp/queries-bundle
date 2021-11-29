@@ -248,8 +248,11 @@ class SquirrelQueriesExtension extends AbstractExtension
     public function replaceQueryParameters(string $query, array|Data $parameters): string
     {
         if ($parameters instanceof Data) {
-            /** @var array $parameters */
             $parameters = $parameters->getValue(true);
+
+            if (!\is_array($parameters)) {
+                throw new \LogicException('Parameters is not an array, it is set to: ' . \print_r($parameters, true));
+            }
         }
 
         $i = 0;

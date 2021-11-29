@@ -5,6 +5,7 @@ namespace Squirrel\QueriesBundle;
 use Squirrel\QueriesBundle\DependencyInjection\Compiler\LayersPass;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
@@ -20,7 +21,7 @@ class SquirrelQueriesBundle extends Bundle
         $container->addCompilerPass(new LayersPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 100);
     }
 
-    public function getContainerExtension()
+    public function getContainerExtension(): ?ExtensionInterface
     {
         // No container extension needed
         return null;
