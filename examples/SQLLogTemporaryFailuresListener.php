@@ -22,8 +22,9 @@ class SQLLogTemporaryFailuresListener implements DBRawInterface
     // Default implementation of all DBRawInterface functions - pass to lower layer
     use DBPassToLowerLayerTrait;
 
-    public function __construct(private LoggerInterface $logger)
-    {
+    public function __construct(
+        private LoggerInterface $logger,
+    ) {
     }
 
     /**

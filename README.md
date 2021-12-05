@@ -15,7 +15,7 @@ composer require squirrelphp/queries-bundle
 Configuration
 -------------
 
-Enable the bundle in your AppKernel by adding `Squirrel\QueriesBundle\SquirrelQueriesBundle` to the list of bundles.
+Enable the bundle in your project by adding `Squirrel\QueriesBundle\SquirrelQueriesBundle` to the list of bundles (usually in `config/bundles.php`).
 
 Create a Symfony service for each of your Doctrine DBAL connections and tag it with squirrel.connection, for example like this:
 
