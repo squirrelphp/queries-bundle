@@ -1,0 +1,6 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Cannot cast object to string\\.$#"
+			count: 1
+			path: src/Twig/SquirrelQueriesExtension.php

@@ -203,9 +203,7 @@ class SquirrelDataCollector extends DataCollector
     private function sanitizeQuery(string $connectionName, array $query): array
     {
         $query['explainable'] = true;
-        if ($query['params'] === null) {
-            $query['params'] = array();
-        }
+        $query['params'] ??= array();
         if (!\is_array($query['params'])) {
             $query['params'] = array($query['params']);
         }
