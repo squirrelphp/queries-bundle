@@ -3,8 +3,10 @@
 namespace Squirrel\QueriesBundle;
 
 use Squirrel\QueriesBundle\DependencyInjection\Compiler\LayersPass;
+use Squirrel\QueriesBundle\DependencyInjection\SquirrelQueriesExtension;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 final class SquirrelQueriesBundle extends Bundle
@@ -21,5 +23,10 @@ final class SquirrelQueriesBundle extends Bundle
     public function getPath(): string
     {
         return \dirname(__DIR__);
+    }
+
+    public function getContainerExtension(): ExtensionInterface
+    {
+        return new SquirrelQueriesExtension();
     }
 }

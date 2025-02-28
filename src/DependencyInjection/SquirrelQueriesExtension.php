@@ -15,9 +15,19 @@ use Symfony\Component\DependencyInjection\Extension\Extension;
 
 final class SquirrelQueriesExtension extends Extension
 {
+    public function getConfiguration(array $config, ContainerBuilder $container): Configuration
+    {
+        return new Configuration($this->getAlias());
+    }
+
+    public function getAlias(): string
+    {
+        return 'squirrel_queries';
+    }
+
     public function load(array $configs, ContainerBuilder $container): void
     {
-        $configuration = new Configuration('squirrel_queries');
+        $configuration = $this->getConfiguration([], $container);
         $config = $this->processConfiguration($configuration, $configs);
 
         foreach ($config['connections'] as $name => $connection) {
