@@ -32,26 +32,35 @@ final class SquirrelQueriesExtension extends Extension
 
         foreach ($config['connections'] as $name => $connection) {
             $configObj = match ($connection['type']) {
-                'mariadb', 'mysql' => new Mysql(
-                    host: $connection['host'],
-                    user: $connection['user'],
-                    password: $connection['password'],
-                    port: $connection['port'] ?? 3306,
-                    dbname: $connection['dbname'] ?? null,
-                    charset: $connection['charset'] ?? 'utf8mb4',
-                    ssl: $this->getSslConfig($connection['ssl'] ?? null),
+                'mariadb', 'mysql' => new Definition(
+                    Mysql::class,
+                    [
+                        '$host' => $connection['host'],
+                        '$user' => $connection['user'],
+                        '$password' => $connection['password'],
+                        '$port' => $connection['port'] ?? 3306,
+                        '$dbname' => $connection['dbname'] ?? null,
+                        '$charset' => $connection['charset'] ?? 'utf8mb4',
+                        '$ssl' => $this->getSslConfig($connection['ssl'] ?? null),
+                    ],
                 ),
-                'pgsql' => new Pgsql(
-                    host: $connection['host'],
-                    user: $connection['user'],
-                    password: $connection['password'],
-                    port: $connection['port'] ?? 5432,
-                    dbname: $connection['dbname'] ?? null,
-                    charset: $connection['charset'] ?? 'UTF8',
-                    ssl: $this->getSslConfig($connection['ssl'] ?? null),
+                'pgsql' => new Definition(
+                    Pgsql::class,
+                    [
+                        '$host' => $connection['host'],
+                        '$user' => $connection['user'],
+                        '$password' => $connection['password'],
+                        '$port' => $connection['port'] ?? 5432,
+                        '$dbname' => $connection['dbname'] ?? null,
+                        '$charset' => $connection['charset'] ?? 'UTF8',
+                        '$ssl' => $this->getSslConfig($connection['ssl'] ?? null),
+                    ],
                 ),
-                'sqlite' => new Sqlite(
-                    path: $connection['path'],
+                'sqlite' => new Definition(
+                    Sqlite::class,
+                    [
+                        '$path' => $connection['path'],
+                    ],
                 ),
                 default => throw new \UnexpectedValueException('Invalid connection type: ' . $connection['type']),
             };
@@ -66,7 +75,7 @@ final class SquirrelQueriesExtension extends Extension
         }
     }
 
-    private function getSslConfig(?array $sslConfig): ?Ssl
+    private function getSslConfig(?array $sslConfig): ?Definition
     {
         if (
             $sslConfig === null
@@ -75,15 +84,18 @@ final class SquirrelQueriesExtension extends Extension
             return null;
         }
 
-        return new Ssl(
-            rootCertificatePath: $sslConfig['rootCertificatePath'],
-            privateKeyPath: $sslConfig['privateKeyPath'],
-            certificatePath: $sslConfig['certificatePath'],
-            verification: match ($sslConfig['verification']) {
-                'Ca' => SslVerification::Ca,
-                'None' => SslVerification::None,
-                default => SslVerification::CaAndHostname,
-            },
+        return new Definition(
+            Ssl::class,
+            [
+                '$rootCertificatePath' => $sslConfig['rootCertificatePath'],
+                '$privateKeyPath' => $sslConfig['privateKeyPath'],
+                '$certificatePath' => $sslConfig['certificatePath'],
+                '$verification' => match ($sslConfig['verification']) {
+                    'Ca' => SslVerification::Ca,
+                    'None' => SslVerification::None,
+                    default => SslVerification::CaAndHostname,
+                },
+            ],
         );
     }
 }
