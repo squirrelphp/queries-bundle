@@ -35,7 +35,7 @@ final class SquirrelDataCollector extends DataCollector
 
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
     {
-        $queries = array();
+        $queries = [];
 
         foreach ($this->loggers as $name => $logger) {
             $queries[$name] = $this->sanitizeQueries($logger->getLogs());
@@ -48,16 +48,14 @@ final class SquirrelDataCollector extends DataCollector
             $connectionNames[$name] = '"' . \implode('", "', $details['services']) . '"';
         }
 
-        $this->data = array(
+        $this->data = [
             'queries' => $queries,
             'connections' => $connectionNames,
-        );
+        ];
 
-        // Might be good idea to replicate this block in doctrine bridge so we can drop this from here after some time.
-        // This code is compatible with such change, because cloneVar is supposed to check if input is already cloned.
         foreach ($this->data['queries'] as &$queries) {
             foreach ($queries as &$query) {
-                $query['params'] = $this->cloneVar($query['params']);
+                $query['values'] = $this->cloneVar($query['values']);
             }
         }
 

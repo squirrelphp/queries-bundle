@@ -47,12 +47,12 @@ final class LayersPass implements CompilerPassInterface
             // Go through all our tags in the service
             foreach ($tags as $tag) {
                 // Activate logging if the debug toolbar is active
-                $this->setLoggerIfProfilerActive(
-                    $container,
-                    $profilerActive,
-                    $id,
-                    name: $tag['connectionName'],
-                );
+                if ($profilerActive) {
+                    $this->replaceConnectionWithLogger(
+                        $container,
+                        $id,
+                    );
+                }
 
                 $connectionList[$tag['connectionName']] = $this->createConnectionFromTag(
                     $container,
@@ -167,20 +167,14 @@ final class LayersPass implements CompilerPassInterface
         return $taggedServicesOrdered;
     }
 
-    private function setLoggerIfProfilerActive(
+    private function replaceConnectionWithLogger(
         ContainerBuilder $container,
-        bool $profilerActive,
         string $serviceId,
-        string $name,
     ): void {
-        if ($profilerActive === false) {
-            return;
-        }
-
         $connection = $container->getDefinition($serviceId);
 
         $loggerConnection = new Definition(ConnectionLogger::class, [$connection]);
-        $container->setDefinition('squirrel_connection.' . $name, $loggerConnection);
+        $container->setDefinition($serviceId, $loggerConnection);
     }
 
     // Get base implementation interacting with Squirrel Connection Service
@@ -194,8 +188,6 @@ final class LayersPass implements CompilerPassInterface
             );
         }
 
-        $connection = $container->findDefinition($serviceId);
-
         $implementationClass = match ($tag['connectionType']) {
             'mysql', 'mariadb' => MySQLImplementation::class,
             'pgsql' => PostgreSQLImplementation::class,
@@ -206,7 +198,7 @@ final class LayersPass implements CompilerPassInterface
             ),
         };
 
-        return new Definition($implementationClass, [$connection]);
+        return new Definition($implementationClass, [new Reference($serviceId)]);
     }
 
     private function createLayeredConnection(

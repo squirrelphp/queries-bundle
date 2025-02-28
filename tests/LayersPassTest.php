@@ -5,7 +5,6 @@ namespace Squirrel\QueriesBundle\Tests;
 use Squirrel\Connection\Config\Mysql;
 use Squirrel\Connection\Config\Pgsql;
 use Squirrel\Connection\Config\Sqlite;
-use Squirrel\Connection\Log\ConnectionLogger;
 use Squirrel\Connection\PDO\ConnectionPDO;
 use Squirrel\Queries\DB\ErrorHandler;
 use Squirrel\Queries\DB\MySQLImplementation;
@@ -17,6 +16,7 @@ use Squirrel\QueriesBundle\Examples\SQLLogTemporaryFailuresListener;
 use Squirrel\QueriesBundle\Twig\SquirrelQueriesExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Reference;
 
 final class LayersPassTest extends \PHPUnit\Framework\TestCase
 {
@@ -74,11 +74,7 @@ final class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(1, \count($methodCalls[0][1]));
         $this->assertTrue($methodCalls[0][1][0] instanceof Definition);
         $this->assertEquals(MySQLImplementation::class, $methodCalls[0][1][0]->getClass());
-        $this->assertEquals([$newConnection], $methodCalls[0][1][0]->getArguments());
-
-        //$connectionDefinition = $container->getDefinition('squirrel_connection.' . $connectionName);
-
-        //$this->assertInstanceOf(ConnectionInterface::class, $connectionDefinition);
+        $this->assertEquals([new Reference('squirrel_connection.' . $connectionName)], $methodCalls[0][1][0]->getArguments());
     }
 
     public function testOneMySQLConnectionNotDefault(): void
@@ -158,25 +154,7 @@ final class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(1, \count($methodCalls[0][1]));
         $this->assertTrue($methodCalls[0][1][0] instanceof Definition);
         $this->assertEquals(PostgreSQLImplementation::class, $methodCalls[0][1][0]->getClass());
-        $this->assertEquals([$newConnection], $methodCalls[0][1][0]->getArguments());
-
-        /*$doctrineConnection = $container->getDefinition('pgsql_connection');
-        $doctrineArguments = $doctrineConnection->getArguments();
-
-        // Check the adjusted connection options for doctrine
-        $this->assertEquals([
-            'driver' => 'pdo_pgsql',
-            'host' => 'localhost',
-            'port' => '3306',
-            'dbname' => 'ecommerce',
-            'user' => 'username',
-            'password' => 'password',
-            'driverOptions' => [
-                \PDO::ATTR_EMULATE_PREPARES => false,
-            ],
-        ], $doctrineArguments['$params']);
-
-        $this->assertEquals(1, \count($doctrineArguments));*/
+        $this->assertEquals([new Reference('squirrel_connection.' . $connectionName)], $methodCalls[0][1][0]->getArguments());
     }
 
     public function testOneSQLiteConnection(): void
@@ -216,23 +194,7 @@ final class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(1, \count($methodCalls[0][1]));
         $this->assertTrue($methodCalls[0][1][0] instanceof Definition);
         $this->assertEquals(SQLiteImplementation::class, $methodCalls[0][1][0]->getClass());
-        $this->assertEquals([$newConnection], $methodCalls[0][1][0]->getArguments());
-
-        /*$doctrineConnection = $container->getDefinition('sqlite_connection');
-        $doctrineArguments = $doctrineConnection->getArguments();
-
-        // Check the adjusted connection options for doctrine
-        $this->assertEquals([
-            'driver' => 'pdo_sqlite',
-            'path' => 'database.db',
-            'user' => 'username',
-            'password' => 'password',
-            'driverOptions' => [
-                \PDO::ATTR_EMULATE_PREPARES => false,
-            ],
-        ], $doctrineArguments['$params']);
-
-        $this->assertEquals(1, \count($doctrineArguments));*/
+        $this->assertEquals([new Reference('squirrel_connection.' . $connectionName)], $methodCalls[0][1][0]->getArguments());
     }
 
     public function testProfilerChanges(): void
@@ -277,28 +239,7 @@ final class LayersPassTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(1, \count($methodCalls[0][1]));
         $this->assertTrue($methodCalls[0][1][0] instanceof Definition);
         $this->assertEquals(SQLiteImplementation::class, $methodCalls[0][1][0]->getClass());
-        $this->assertEquals([new Definition(ConnectionLogger::class, [$newConnection])], $methodCalls[0][1][0]->getArguments());
-
-        /*$doctrineConnection = $container->getDefinition('sqlite_connection');
-        $doctrineArguments = $doctrineConnection->getArguments();
-
-        // Check the adjusted connection options for doctrine
-        $this->assertEquals([
-            'driver' => 'pdo_sqlite',
-            'path' => 'database.db',
-            'user' => 'username',
-            'password' => 'password',
-            'driverOptions' => [
-                \PDO::ATTR_EMULATE_PREPARES => false,
-            ],
-        ], $doctrineArguments['$params']);
-
-        $this->assertEquals(2, \count($doctrineArguments));
-
-        $configuration = new Definition(Configuration::class);
-        $configuration->addMethodCall('setSQLLogger', [new Definition(DebugStack::class)]);
-
-        $this->assertEquals($configuration, $doctrineArguments['$config']);*/
+        $this->assertEquals([new Reference('squirrel_connection.' . $connectionName)], $methodCalls[0][1][0]->getArguments());
     }
 
     public function testOneAddedLayer(): void

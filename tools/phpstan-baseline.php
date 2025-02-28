@@ -56,6 +56,12 @@ $ignoreErrors[] = [
 	'path' => __DIR__ . '/../examples/SQLLogTemporaryFailuresListener.php',
 ];
 $ignoreErrors[] = [
+	// identifier: argument.type
+	'message' => '#^Parameter \\#1 \\$queries of method Squirrel\\\\QueriesBundle\\\\DataCollector\\\\SquirrelDataCollector\\:\\:sanitizeQueries\\(\\) expects array\\<int, array\\{query\\: string, values\\: array\\<bool\\|float\\|int\\|Squirrel\\\\Connection\\\\LargeObject\\|string\\>, time\\: int\\}\\>, array\\<int, array\\{query\\: string, values\\: array\\<bool\\|float\\|int\\|Squirrel\\\\Connection\\\\LargeObject\\|string\\|null\\>, time\\: int\\}\\> given\\.$#',
+	'count' => 1,
+	'path' => __DIR__ . '/../src/DataCollector/SquirrelDataCollector.php',
+];
+$ignoreErrors[] = [
 	// identifier: assign.propertyType
 	'message' => '#^Property Squirrel\\\\QueriesBundle\\\\DataCollector\\\\SquirrelDataCollector\\:\\:\\$groupedQueries \\(array\\<string, array\\<string, array\\{sql\\: string, executionMS\\: float\\|int, executionPercent\\: float, count\\: int, index\\: int, values\\: array\\<bool\\|float\\|int\\|string\\|null\\>\\}\\>\\>\\|null\\) does not accept non\\-empty\\-array\\<array\\<int\\|string, mixed\\>\\>\\.$#',
 	'count' => 2,

@@ -7,7 +7,6 @@ use Squirrel\Connection\Config\Pgsql;
 use Squirrel\Connection\Config\Sqlite;
 use Squirrel\Connection\Config\Ssl;
 use Squirrel\Connection\Config\SslVerification;
-use Squirrel\Connection\ConnectionInterface;
 use Squirrel\Connection\PDO\ConnectionPDO;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -68,10 +67,6 @@ final class SquirrelQueriesExtension extends Extension
             $definition = new Definition(ConnectionPDO::class, [$configObj]);
             $definition->addTag('squirrel.connection', ['connectionName' => $name, 'connectionType' => $connection['type'], 'isDefault' => $name === 'default']);
             $container->setDefinition('squirrel_connection.' . $name, $definition);
-
-            if ($name === 'default') {
-                $container->setAlias(ConnectionInterface::class, 'squirrel_connection.' . $name);
-            }
         }
     }
 

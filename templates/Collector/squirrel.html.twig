@@ -12,8 +12,8 @@
 
             <span class="sf-toolbar-value">{{ collector.querycount }}</span>
             <span class="sf-toolbar-info-piece-additional-detail">
-                <span class="sf-toolbar-label">in</span>
-                <span class="sf-toolbar-value">{{ '%0.2f'|format(collector.time * 1000) }}</span>
+                <span class="sf-toolbar-label">in&nbsp;</span>
+                <span class="sf-toolbar-value">{{ '%0.2f'|format(collector.time) }}</span>
                 <span class="sf-toolbar-label">ms</span>
             </span>
         {% endset %}
@@ -25,7 +25,7 @@
             </div>
             <div class="sf-toolbar-info-piece">
                 <b>Query time</b>
-                <span>{{ '%0.2f'|format(collector.time * 1000) }} ms</span>
+                <span>{{ '%0.2f'|format(collector.time) }} ms</span>
             </div>
         {% endset %}
 
@@ -66,7 +66,7 @@
             </div>
 
             <div class="metric">
-                <span class="value">{{ '%0.2f'|format(collector.time * 1000) }} ms</span>
+                <span class="value">{{ '%0.2f'|format(collector.time) }} ms</span>
                 <span class="label">Query time</span>
             </div>
         </div>
@@ -113,12 +113,12 @@
                             {% if group_queries %}
                                 <td class="time-container">
                                     <span class="time-bar" style="width:{{ '%0.2f'|format(query.executionPercent) }}%"></span>
-                                    <span class="nowrap">{{ '%0.2f'|format(query.executionMS * 1000) }}&nbsp;ms<br />({{ '%0.2f'|format(query.executionPercent) }}%)</span>
+                                    <span class="nowrap">{{ '%0.2f'|format(query.executionMS) }}&nbsp;ms<br />({{ '%0.2f'|format(query.executionPercent) }}%)</span>
                                 </td>
                                 <td class="nowrap">{{ query.count }}</td>
                             {% else %}
                                 <td class="nowrap">{{ loop.index }}</td>
-                                <td class="nowrap">{{ '%0.2f'|format(query.executionMS * 1000) }}&nbsp;ms</td>
+                                <td class="nowrap">{{ '%0.2f'|format(query.executionMS) }}&nbsp;ms</td>
                             {% endif %}
                             <td>
                                 {{ query.sql|squirrel_pretty_query(highlight_only = true) }}

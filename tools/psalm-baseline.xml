@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <files psalm-version="6.8.8@1361cd33008feb3ae2b4a93f1860e14e538ec8c2">
   <file src="src/DataCollector/SquirrelDataCollector.php">
+    <ArgumentTypeCoercion>
+      <code><![CDATA[$logger->getLogs()]]></code>
+    </ArgumentTypeCoercion>
     <InvalidPropertyAssignmentValue>
       <code><![CDATA[$this->groupedQueries]]></code>
       <code><![CDATA[$this->groupedQueries]]></code>
