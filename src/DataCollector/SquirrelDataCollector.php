@@ -2,58 +2,33 @@
 
 namespace Squirrel\QueriesBundle\DataCollector;
 
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Logging\DebugStack;
-use Doctrine\DBAL\Types\Type;
-use Squirrel\Queries\DBRawInterface;
+use Squirrel\Connection\ConnectionInterface;
+use Squirrel\Connection\LargeObject;
+use Squirrel\Connection\Log\ConnectionLogger;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollector;
 
-/**
- * @codeCoverageIgnore Mostly similar to Doctrine DBAL DataCollector, testing is not worth it
- */
-class SquirrelDataCollector extends DataCollector
+final class SquirrelDataCollector extends DataCollector
 {
-    /**
-     * @var array List of data about the squirrel connections
-     */
+    /** @var array<array{connection: ConnectionInterface, services: string[]}> */
     private array $connections;
 
-    /**
-     * @var DebugStack[]
-     */
+    /** @var ConnectionLogger[] */
     private array $loggers = [];
 
-    /**
-     * @var array|null
-     */
+    /** @var array<string, array<string, array{sql: string, executionMS: float|int, executionPercent: float, count: int, index: int, values: array<int|float|string|bool|null>}>>|null */
     private ?array $groupedQueries = null;
 
+    /** @param array<array{connection: ConnectionInterface, services: string[]}> $squirrelConnections */
     public function __construct(array $squirrelConnections)
     {
         $this->connections = $squirrelConnections;
 
         // Key = name of connection, value = array with 'connection' and 'services'
         foreach ($squirrelConnections as $connectionName => $connectionDetails) {
-            /**
-             * @var DBRawInterface $squirrelConnection
-             */
-            $squirrelConnection = $connectionDetails['connection'];
-
-            /**
-             * @var Connection $doctrineConnection
-             */
-            $doctrineConnection = $squirrelConnection->getConnection();
-
-            /**
-             * @var DebugStack|null $logger Assigned in LayersPass class
-             * @psalm-suppress InternalMethod
-             */
-            $logger = $doctrineConnection->getConfiguration()->getSQLLogger();
-
-            if (isset($logger)) {
-                $this->loggers[$connectionName] = $logger;
+            if ($connectionDetails['connection'] instanceof ConnectionLogger) {
+                $this->loggers[$connectionName] = $connectionDetails['connection'];
             }
         }
     }
@@ -61,8 +36,9 @@ class SquirrelDataCollector extends DataCollector
     public function collect(Request $request, Response $response, ?\Throwable $exception = null): void
     {
         $queries = array();
+
         foreach ($this->loggers as $name => $logger) {
-            $queries[$name] = $this->sanitizeQueries($name, $logger->queries);
+            $queries[$name] = $this->sanitizeQueries($logger->getLogs());
         }
 
         $connectionNames = [];
@@ -159,8 +135,7 @@ class SquirrelDataCollector extends DataCollector
         $this->data = [];
 
         foreach ($this->loggers as $logger) {
-            $logger->queries = [];
-            $logger->currentQuery = 0;
+            $logger->resetLogs();
         }
     }
 
@@ -191,45 +166,35 @@ class SquirrelDataCollector extends DataCollector
         return 'squirrel';
     }
 
-    private function sanitizeQueries(string $connectionName, array $queries): array
+    /** @param list<array{query: string, values: array<scalar|LargeObject>, time: int}> $queries */
+    private function sanitizeQueries(array $queries): array
     {
         foreach ($queries as $i => $query) {
-            $queries[$i] = $this->sanitizeQuery($connectionName, $query);
+            $queries[$i] = $this->sanitizeQuery($query);
         }
 
         return $queries;
     }
 
-    private function sanitizeQuery(string $connectionName, array $query): array
+    /** @param array{query: string, values: array<scalar|LargeObject>, time: int} $query */
+    private function sanitizeQuery(array $query): array
     {
-        $query['explainable'] = true;
-        $query['params'] ??= array();
-        if (!\is_array($query['params'])) {
-            $query['params'] = array($query['params']);
-        }
-        foreach ($query['params'] as $j => $param) {
-            if (isset($query['types'][$j])) {
-                // Transform the param according to the type
-                $type = $query['types'][$j];
-                if (\is_string($type)) {
-                    $type = Type::getType($type);
-                }
-                if ($type instanceof Type) {
-                    $query['types'][$j] = $type->getBindingType();
-                    $param = $type->convertToDatabaseValue(
-                        $param,
-                        $this->connections[$connectionName]['connection']->getConnection()->getDatabasePlatform(),
-                    );
-                }
-            }
+        $sanitizedQuery = [
+            'sql' => $query['query'],
+            'values' => [],
+            'executionMS' => $query['time'] / 1_000_000,
+            'explainable' => true,
+        ];
 
-            [$query['params'][$j], $explainable] = $this->sanitizeParam($param);
+        foreach ($query['values'] as $j => $param) {
+            [$sanitizedQuery['values'][$j], $explainable] = $this->sanitizeParam($param);
+
             if (!$explainable) {
-                $query['explainable'] = false;
+                $sanitizedQuery['explainable'] = false;
             }
         }
 
-        return $query;
+        return $sanitizedQuery;
     }
 
     /**
@@ -238,33 +203,15 @@ class SquirrelDataCollector extends DataCollector
      * The return value is an array with the sanitized value and a boolean
      * indicating if the original value was kept (allowing to use the sanitized
      * value to explain the query).
+     *
+     * @return array{0: int|float|string|bool|null, 1: bool}
      */
-    private function sanitizeParam(mixed $var): array
+    private function sanitizeParam(int|float|string|bool|null|LargeObject $var): array
     {
-        if (\is_object($var)) {
-            $className = \get_class($var);
-
-            return \method_exists($var, '__toString') ?
-                array(\sprintf('/* Object(%s): */"%s"', $className, $var->__toString()), false) :
-                array(\sprintf('/* Object(%s) */', $className), false);
+        if ($var instanceof LargeObject) {
+            return array(\sprintf('/* Object(%s): */"%s"', 'LargeObject', $var->getString()), false);
         }
 
-        if (\is_array($var)) {
-            $a = array();
-            $original = true;
-            foreach ($var as $k => $v) {
-                [$value, $orig] = $this->sanitizeParam($v);
-                $original = $original && $orig;
-                $a[$k] = $value;
-            }
-
-            return array($a, $original);
-        }
-
-        if (\is_resource($var)) {
-            return array(\sprintf('/* Resource(%s) */', \get_resource_type($var)), false);
-        }
-
-        return array($var, true);
+        return [$var, true];
     }
 }

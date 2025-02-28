@@ -1,0 +1,12 @@
+includes:
+    - phpstan-baseline.php
+
+parameters:
+    level: max
+    paths:
+        - ../src
+        - ../examples
+    tmpDir: cache/phpstan
+    ignoreErrors:
+        -
+            identifier: missingType.iterableValue

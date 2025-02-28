@@ -1,7 +1,7 @@
 Squirrel Queries Integration for Symfony
 ========================================
 
-[![Build Status](https://img.shields.io/travis/com/squirrelphp/queries-bundle.svg)](https://travis-ci.com/squirrelphp/queries-bundle) [![Test Coverage](https://api.codeclimate.com/v1/badges/811a4b617f29bd286a75/test_coverage)](https://codeclimate.com/github/squirrelphp/queries-bundle/test_coverage) ![PHPStan](https://img.shields.io/badge/style-level%208-success.svg?style=flat-round&label=phpstan) [![Packagist Version](https://img.shields.io/packagist/v/squirrelphp/queries-bundle.svg?style=flat-round)](https://packagist.org/packages/squirrelphp/queries-bundle) [![PHP Version](https://img.shields.io/packagist/php-v/squirrelphp/queries-bundle.svg)](https://packagist.org/packages/squirrelphp/queries-bundle) [![Software License](https://img.shields.io/badge/license-MIT-success.svg?style=flat-round)](LICENSE)
+[![Build Status](https://img.shields.io/travis/com/squirrelphp/queries-bundle.svg)](https://travis-ci.com/squirrelphp/queries-bundle) ![PHPStan](https://img.shields.io/badge/style-level%20max-success.svg?style=flat-round&label=phpstan) [![Packagist Version](https://img.shields.io/packagist/v/squirrelphp/queries-bundle.svg?style=flat-round)](https://packagist.org/packages/squirrelphp/queries-bundle) [![PHP Version](https://img.shields.io/packagist/php-v/squirrelphp/queries-bundle.svg)](https://packagist.org/packages/squirrelphp/queries-bundle) [![Software License](https://img.shields.io/badge/license-MIT-success.svg?style=flat-round)](LICENSE)
 
 Integration of [squirrelphp/queries](https://github.com/squirrelphp/queries) into Symfony through service tags and bundle configuration.
 
@@ -17,38 +17,64 @@ Configuration
 
 Enable the bundle in your project by adding `Squirrel\QueriesBundle\SquirrelQueriesBundle` to the list of bundles (usually in `config/bundles.php`).
 
-Create a Symfony service for each of your Doctrine DBAL connections and tag it with squirrel.connection, for example like this:
+Create a configuration file for your connections, here is an example:
 
-    services:
-        database_connection:
-            class: Doctrine\DBAL\Connection
-            factory: Doctrine\DBAL\DriverManager::getConnection
-            arguments:
-                $params:
-                    driver:   pdo_mysql
-                    host:     "%database_host%"
-                    port:     "%database_port%"
-                    dbname:   "%database_name%"
-                    user:     "%database_user%"
-                    password: "%database_password%"
-                    charset:  UTF8
-            tags:
-                - { name: squirrel.connection, connectionName: somename, connectionType: mysql, isDefault: true }
+    squirrel_queries:
+        connections:
+            default:
+                type: 'mysql'
+                host: '%env(DB_HOST)'
+                port: '%env(DB_PORT)'
+                user: '%env(DB_USER)'
+                password: '%env(DB_PASSWORD)'
+                dbname: '%env(DB_DBNAME)'
+            error:
+                type: 'mariadb'
+                host: 'mariadb_database'
+                port: 9999
+                user: 'app'
+                password: 'hg84kdhgjg84'
+                dbname: 'app_prod'
+                ssl:
+                    rootCertificatePath: '/home/app/ssl/ca.crt'
+                    privateKeyPath: '/home/app/ssl/ca.key'
+                    certificatePath: '/home/app/ssl/cert.crt'
+                    verification: 'CaAndHostname'
+            sqlite:
+                type: 'sqlite'
+                path: '/home/database.db'
 
-You can use any DBAL connection settings, and the service name (`database_connection` in this case) is irrelevant. For the tag, just make sure:
+The example shows all possible values you can set (except for `charset`, which is explained further below but should ideally be omitted/left at the default).
+`type` can only be either `mysql`, `mariadb`, `pgsql` or `sqlite`. `mysql` and `mariadb` are functionally equivalent.
 
-- to use one of the three supported database types as `connectionType`: `mysql` for MySQL/MariaDB, `pgsql` for PostgreSQL, `sqlite` for SQLite
-- set a unique `connectionName` for each tag entry
+Type `sqlite` only supports the optional path parameter to the database file, when not provided (or null) it creates an in-memory database.
 
-If you set `isDefault` to true, that connection will be registered as `Squirrel\Queries\DBInterface` which you can then use as a type hint in your services. Only one connection can be the default!
+For `mysql`, `mariadb` and `pgsql` connections the following values can be provided:
 
-If you have multiple connections and need to reference them in your service definitions, you can specifically inject them through the `connectionName` - just prefix it with `squirrel.connection.` to get the correct registered service name. So for a connectionName of `mysql_remote`, the service in Symfony would be called `squirrel.connection.mysql_remote`.
+- `host` can be a hostname or IP in order to connect to the database server
+- `port` is an integer and is optional (defaults to 3306 for mysql/mariadb, 5432 for postgresql)
+- `user` is the username with which to connect
+- `password` is the password to connect with
+- `dbname` is the default database to open and is optional, by default (or with a value of null) no database is opened
+- `charset` can be provided and defaults to `utf8mb4` for mysql/mariadb and `UTF8` for postgresql, the recommendation is to leave it at the default
+- `ssl` sets additional values so the connection will be encrypted (if omitted or set to null no encryption is used):
+  - `rootCertificatePath` is the path to the root certificate file used by the database server
+  - `privateKeyPath` is the path to the private key the client sends to the database server
+  - `certificatePath` is the path to the certificate file the client sends to the database server
+  - `verification` can be one of the following values:
+    - `CaAndHostname` (which is the default) enforces that the CA of the database server certificate matches the CA in `rootCertificatePath` and that the hostname of the server certificate matches the hostname in `host`
+    - `Ca` enforces that the CA of the database server certificate matches the CA in `rootCertificatePath` (the hostname is not verified) - beware that this does not work for mysql/mariadb and will throw an exception for those connections, because just checking the CA is not supported by PHP for mysql/mariadb (it works as expected for postgresql)
+    - `None` will not check the CA or the hostname of the server certificate
 
-### PDO extra configuration passed to Doctrine
+The connection named `default` will be registered as `Squirrel\Queries\DBInterface` which you can then use as a type hint in your services. All connections also get registered as services that start with `squirrel.connection.`, so in the above example the following services would be defined: `squirrel.connection.default`, `squirrel.connection.error` and `squirrel.connection.sqlite`.
 
-- For all connections, `PDO::ATTR_EMULATE_PREPARES` is set to false, so real query and values separation is enabled instead of emulating it via PDO. You should not notice this in any way, even in terms of performance: it was tested, and when script and database are running in the same network there is no measureable difference. Your script and database would need to be apart by some distance for any possible effect to manifest.
-- For MySQL, `PDO::MYSQL_ATTR_FOUND_ROWS` is set to true, meaning the "affected rows" reported for UPDATE queries are the found rows in the database, even if nothing changed by executing the UPDATE. By default with MySQL you get the "changed" rows, which is a behavior no other database has or even supports, so it is not a good behavior to rely on.
-- For MySQL, `PDO::MYSQL_ATTR_MULTI_STATEMENTS` is set to false, so multiple statements in one query are not possible. When using Squirrel Queries regularly this should make no difference whatsoever (as the library only does one query at a time), but if you do something custom with the Doctrine connection this makes sure you cannot shoot yourself in the foot, as multiple statements per query were a source of security exploits in the past and have little real world relevance.
+### Common behavior of all connections
+
+The following options are hardcoded into all connections and mostly differ from the common defaults in PHP database connections (see [squirrelphp/connection](https://github.com/squirrelphp/connection) for more details):
+
+- Emulation of prepares is turned off, so real query and values separation is enabled instead of emulating it (which is usually the default in PHP). You should not notice this in any way, even in terms of performance: it was tested, and when script and database are running in the same network there is no measureable difference. Your script and database would need to be apart by some distance for any possible effect to manifest. On the other hand, the separation of queries and values has undeniable security benefits and is the way the underlying database client libraries are designed to work.
+- For MySQL/MariaDB, the "affected rows" reported for UPDATE queries are the "found rows" in the database, even if nothing changed by executing the UPDATE. By default with MySQL/MariaDB in PHP you get the "changed rows", which is a behavior no other database has or even supports, so MySQL/MariaDB is configured to behave more like any other database. Getting the "found rows" count can be useful information, while relying on the "changed rows" count relies on special behavior in one database system.
+- Executing multiple statements in one query is disabled. Multiple statements per query were a source of security exploits in the past, are often not easy to port between different database systems and have little real world relevance. Use transactions instead, which is a guaranteed way to execute multiple statements together, or use parallel connections / multiple connections if speed is an issue.
 
 Adding layers
 -------------

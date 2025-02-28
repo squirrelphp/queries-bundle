@@ -2,15 +2,14 @@
 
 namespace Squirrel\QueriesBundle\DependencyInjection\Compiler;
 
-use Doctrine\DBAL\Configuration;
-use Doctrine\DBAL\Logging\DebugStack;
+use Squirrel\Connection\Log\ConnectionLogger;
+use Squirrel\Queries\DB\ErrorHandler;
+use Squirrel\Queries\DB\MySQLImplementation;
+use Squirrel\Queries\DB\PostgreSQLImplementation;
+use Squirrel\Queries\DB\SQLiteImplementation;
 use Squirrel\Queries\DBBuilder;
 use Squirrel\Queries\DBBuilderInterface;
 use Squirrel\Queries\DBInterface;
-use Squirrel\Queries\Doctrine\DBErrorHandler;
-use Squirrel\Queries\Doctrine\DBMySQLImplementation;
-use Squirrel\Queries\Doctrine\DBPostgreSQLImplementation;
-use Squirrel\Queries\Doctrine\DBSQLiteImplementation;
 use Squirrel\QueriesBundle\DataCollector\SquirrelDataCollector;
 use Squirrel\QueriesBundle\Twig\SquirrelQueriesExtension;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
@@ -21,7 +20,7 @@ use Symfony\Component\DependencyInjection\Reference;
 /**
  * Create DBInterface services with different layers
  */
-class LayersPass implements CompilerPassInterface
+final class LayersPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container): void
     {
@@ -45,11 +44,16 @@ class LayersPass implements CompilerPassInterface
 
         // Go through all tagged services
         foreach ($services as $id => $tags) {
-            // Activate logging if the debug toolbar is active
-            $this->setLoggerIfProfilerActive($container, $profilerActive, $id);
-
             // Go through all our tags in the service
             foreach ($tags as $tag) {
+                // Activate logging if the debug toolbar is active
+                $this->setLoggerIfProfilerActive(
+                    $container,
+                    $profilerActive,
+                    $id,
+                    name: $tag['connectionName'],
+                );
+
                 $connectionList[$tag['connectionName']] = $this->createConnectionFromTag(
                     $container,
                     $id,
@@ -107,7 +111,7 @@ class LayersPass implements CompilerPassInterface
 
         // Keep list of connections if we need them for profiler
         return [
-            'connection' => new Reference($connectionServiceName),
+            'connection' => new Reference($id),
             'services' => $servicesList,
         ];
     }
@@ -116,7 +120,7 @@ class LayersPass implements CompilerPassInterface
     {
         // If no custom error handler has been defined, we use our default one
         if (!$container->hasDefinition('squirrel.error_handler')) {
-            $dbErrorHandler = new Definition(DBErrorHandler::class);
+            $dbErrorHandler = new Definition(ErrorHandler::class);
             $dbErrorHandler->setPublic(false);
 
             $container->setDefinition('squirrel.error_handler', $dbErrorHandler);
@@ -167,19 +171,19 @@ class LayersPass implements CompilerPassInterface
         ContainerBuilder $container,
         bool $profilerActive,
         string $serviceId,
+        string $name,
     ): void {
         if ($profilerActive === false) {
             return;
         }
 
-        $dbalConfig = new Definition(Configuration::class);
-        $dbalConfig->addMethodCall('setSQLLogger', [new Definition(DebugStack::class)]);
+        $connection = $container->getDefinition($serviceId);
 
-        $connection = $container->findDefinition($serviceId);
-        $connection->setArgument('$config', $dbalConfig);
+        $loggerConnection = new Definition(ConnectionLogger::class, [$connection]);
+        $container->setDefinition('squirrel_connection.' . $name, $loggerConnection);
     }
 
-    // Get base implementation interacting with Doctrine DBAL connection
+    // Get base implementation interacting with Squirrel Connection Service
     private function getBaseImplementation(ContainerBuilder $container, string $serviceId, array $tag): Definition
     {
         // Connection with this name already exists - each connection name has to be unique
@@ -190,47 +194,17 @@ class LayersPass implements CompilerPassInterface
             );
         }
 
-        // Custom implementation was defined as a service
-        if ($container->hasDefinition('squirrel.implementation.' . $tag['connectionName'])) {
-            return $container->findDefinition('squirrel.implementation.' . $tag['connectionName']);
-        }
-
-        // Connection type can be a class name with a unique implementation
-        if (\class_exists($tag['connectionType'])) {
-            return new Definition($tag['connectionType'], [new Reference($serviceId)]);
-        }
-
         $connection = $container->findDefinition($serviceId);
-        $dbalConfig = $connection->getArgument('$params');
 
-        if (!isset($dbalConfig['driverOptions'])) {
-            $dbalConfig['driverOptions'] = [];
-        }
-
-        // Turn off emulation of prepare / query & value separation
-        $dbalConfig['driverOptions'][\PDO::ATTR_EMULATE_PREPARES] = false;
-
-        // Default connection type with existing implementation
-        switch ($tag['connectionType']) {
-            case 'mysql':
-                $implementationClass = DBMySQLImplementation::class;
-                $dbalConfig['driverOptions'][\PDO::MYSQL_ATTR_FOUND_ROWS] = true;
-                $dbalConfig['driverOptions'][\PDO::MYSQL_ATTR_MULTI_STATEMENTS] = false;
-                break;
-            case 'pgsql':
-                $implementationClass = DBPostgreSQLImplementation::class;
-                break;
-            case 'sqlite':
-                $implementationClass = DBSQLiteImplementation::class;
-                break;
-            default:
-                throw new \InvalidArgumentException(
-                    'Only MySQL, Postgres and SQLite are currently supported by squirrel, ' .
-                    'yet you have specified none of those as the connection type.',
-                );
-        }
-
-        $connection->setArgument('$params', $dbalConfig);
+        $implementationClass = match ($tag['connectionType']) {
+            'mysql', 'mariadb' => MySQLImplementation::class,
+            'pgsql' => PostgreSQLImplementation::class,
+            'sqlite' => SQLiteImplementation::class,
+            default => throw new \InvalidArgumentException(
+                'Only MySQL, Postgres and SQLite are currently supported by squirrel, ' .
+                'yet you have specified none of those as the connection type.',
+            ),
+        };
 
         return new Definition($implementationClass, [$connection]);
     }
