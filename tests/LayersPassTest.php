@@ -14,6 +14,7 @@ use Squirrel\QueriesBundle\DataCollector\SquirrelDataCollector;
 use Squirrel\QueriesBundle\DependencyInjection\Compiler\LayersPass;
 use Squirrel\QueriesBundle\Examples\SQLLogTemporaryFailuresListener;
 use Squirrel\QueriesBundle\Twig\SquirrelQueriesExtension;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
@@ -454,7 +455,7 @@ final class LayersPassTest extends \PHPUnit\Framework\TestCase
 
     public function testInvalidConnectionType(): void
     {
-        $this->expectException(\LogicException::class);
+        $this->expectException(InvalidConfigurationException::class);
 
         $container = new ContainerBuilder();
 

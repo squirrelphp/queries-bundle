@@ -22,8 +22,8 @@
     ],
     "require": {
         "php": ">=8.2",
-        "jdorn/sql-formatter": "1.2.17",
-        "squirrelphp/connection": "^0.3.1",
+        "doctrine/sql-formatter": "^1.0.1",
+        "squirrelphp/connection": "^0.3.4",
         "squirrelphp/queries": "^2.1",
         "symfony/config": "^5.0|^6.0|^7.0",
         "symfony/dependency-injection": "^5.0|^6.0|^7.0",

@@ -8,6 +8,7 @@ use Squirrel\Connection\Config\Sqlite;
 use Squirrel\Connection\Config\Ssl;
 use Squirrel\Connection\Config\SslVerification;
 use Squirrel\Connection\PDO\ConnectionPDO;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -34,24 +35,24 @@ final class SquirrelQueriesExtension extends Extension
                 'mariadb', 'mysql' => new Definition(
                     Mysql::class,
                     [
-                        '$host' => $connection['host'],
-                        '$user' => $connection['user'],
-                        '$password' => $connection['password'],
-                        '$port' => $connection['port'] ?? 3306,
+                        '$host' => $connection['host'] ?? throw new InvalidConfigurationException('No host provided for ' . $connection['type'] . ' squirrel database connection, provided configuration: ' . \print_r($connection, true)),
+                        '$user' => $connection['user'] ?? throw new InvalidConfigurationException('No user provided for ' . $connection['type'] . ' squirrel database connection, provided configuration: ' . \print_r($connection, true)),
+                        '$password' => $connection['password'] ?? throw new InvalidConfigurationException('No password provided for ' . $connection['type'] . ' squirrel database connection, provided configuration: ' . \print_r($connection, true)),
+                        '$port' => $connection['port'] ?? Mysql::DEFAULT_PORT,
                         '$dbname' => $connection['dbname'] ?? null,
-                        '$charset' => $connection['charset'] ?? 'utf8mb4',
+                        '$charset' => $connection['charset'] ?? Mysql::DEFAULT_CHARSET,
                         '$ssl' => $this->getSslConfig($connection['ssl'] ?? null),
                     ],
                 ),
                 'pgsql' => new Definition(
                     Pgsql::class,
                     [
-                        '$host' => $connection['host'],
-                        '$user' => $connection['user'],
-                        '$password' => $connection['password'],
-                        '$port' => $connection['port'] ?? 5432,
+                        '$host' => $connection['host'] ?? throw new InvalidConfigurationException('No host provided for ' . $connection['type'] . ' squirrel database connection, provided configuration: ' . \print_r($connection, true)),
+                        '$user' => $connection['user'] ?? throw new InvalidConfigurationException('No user provided for ' . $connection['type'] . ' squirrel database connection, provided configuration: ' . \print_r($connection, true)),
+                        '$password' => $connection['password'] ?? throw new InvalidConfigurationException('No password provided for ' . $connection['type'] . ' squirrel database connection, provided configuration: ' . \print_r($connection, true)),
+                        '$port' => $connection['port'] ?? Pgsql::DEFAULT_PORT,
                         '$dbname' => $connection['dbname'] ?? null,
-                        '$charset' => $connection['charset'] ?? 'UTF8',
+                        '$charset' => $connection['charset'] ?? Pgsql::DEFAULT_CHARSET,
                         '$ssl' => $this->getSslConfig($connection['ssl'] ?? null),
                     ],
                 ),
@@ -61,7 +62,7 @@ final class SquirrelQueriesExtension extends Extension
                         '$path' => $connection['path'],
                     ],
                 ),
-                default => throw new \UnexpectedValueException('Invalid connection type: ' . $connection['type']),
+                default => throw new InvalidConfigurationException('Invalid connection type ("' . $connection['type'] . '") for squirrel database connection, provided configuration: ' . \print_r($connection, true)),
             };
 
             $definition = new Definition(ConnectionPDO::class, [$configObj]);
@@ -82,9 +83,9 @@ final class SquirrelQueriesExtension extends Extension
         return new Definition(
             Ssl::class,
             [
-                '$rootCertificatePath' => $sslConfig['rootCertificatePath'],
-                '$privateKeyPath' => $sslConfig['privateKeyPath'],
-                '$certificatePath' => $sslConfig['certificatePath'],
+                '$rootCertificatePath' => $sslConfig['rootCertificatePath'] ?? throw new InvalidConfigurationException('No rootCertificatePath provided for SSL config of squirrel database connection, provided SSL configuration: ' . \print_r($sslConfig, true)),
+                '$privateKeyPath' => $sslConfig['privateKeyPath'] ?? throw new InvalidConfigurationException('No privateKeyPath provided for SSL config of squirrel database connection, provided SSL configuration: ' . \print_r($sslConfig, true)),
+                '$certificatePath' => $sslConfig['certificatePath'] ?? throw new InvalidConfigurationException('No certificatePath provided for SSL config of squirrel database connection, provided SSL configuration: ' . \print_r($sslConfig, true)),
                 '$verification' => match ($sslConfig['verification']) {
                     'Ca' => SslVerification::Ca,
                     'None' => SslVerification::None,

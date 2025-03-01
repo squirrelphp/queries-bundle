@@ -50,26 +50,38 @@
         .time-container { position: relative; }
         .time-container .nowrap { position: relative; z-index: 1; text-shadow: 0 0 2px #fff; }
         .time-bar { display: block; position: absolute; top: 0; left: 0; bottom: 0; background: #e0e0e0; }
+        .sql-runnable.sf-toggle-content.sf-toggle-visible { display: flex; flex-direction: column; }
+        .sql-runnable button { align-self: end; }
+        {% if profiler_markup_version >= 3 %}
+        .highlight .keyword   { color: var(--highlight-keyword); font-weight: bold; }
+        .highlight .word      { color: var(--color-text); }
+        .highlight .variable  { color: var(--highlight-variable); }
+        .highlight .symbol    { color: var(--color-text); }
+        .highlight .comment   { color: var(--highlight-comment); }
+        .highlight .string    { color: var(--highlight-string); }
+        .highlight .number    { color: var(--highlight-constant); font-weight: bold; }
+        .highlight .error     { color: var(--highlight-error); }
+        {% endif %}
     </style>
 
-        <h2>Query Metrics</h2>
+    <h2>Query Metrics</h2>
 
-        <div class="metrics">
-            <div class="metric">
-                <span class="value">{{ collector.querycount }}</span>
-                <span class="label">Database Queries</span>
-            </div>
-
-            <div class="metric">
-                <span class="value">{{ collector.groupedQueryCount }}</span>
-                <span class="label">Different statements</span>
-            </div>
-
-            <div class="metric">
-                <span class="value">{{ '%0.2f'|format(collector.time) }} ms</span>
-                <span class="label">Query time</span>
-            </div>
+    <div class="metrics">
+        <div class="metric">
+            <span class="value">{{ collector.querycount }}</span>
+            <span class="label">Database Queries</span>
         </div>
+
+        <div class="metric">
+            <span class="value">{{ collector.groupedQueryCount }}</span>
+            <span class="label">Different statements</span>
+        </div>
+
+        <div class="metric">
+            <span class="value">{{ '%0.2f'|format(collector.time) }} ms</span>
+            <span class="label">Query time</span>
+        </div>
+    </div>
 
     {% set group_queries = request.query.getBoolean('group') %}
     {% if group_queries %}
@@ -121,7 +133,7 @@
                                 <td class="nowrap">{{ '%0.2f'|format(query.executionMS) }}&nbsp;ms</td>
                             {% endif %}
                             <td>
-                                {{ query.sql|squirrel_pretty_query(highlight_only = true) }}
+                                {{ query.query|squirrel_prettify_sql }}
 
                                 <div>
                                     <strong class="font-normal text-small">Parameters</strong>: {{ profiler_dump(query.values, 2) }}
@@ -131,16 +143,18 @@
                                     <a href="#" class="sf-toggle link-inverse" data-toggle-selector="#formatted-query-{{ i }}-{{ loop.parent.loop.index }}" data-toggle-alt-content="Hide formatted query">View formatted query</a>
 
                                     &nbsp;&nbsp;
-
                                     <a href="#" class="sf-toggle link-inverse" data-toggle-selector="#original-query-{{ i }}-{{ loop.parent.loop.index }}" data-toggle-alt-content="Hide runnable query">View runnable query</a>
                                 </div>
 
                                 <div id="formatted-query-{{ i }}-{{ loop.parent.loop.index }}" class="sql-runnable hidden">
-                                    {{ query.sql|squirrel_pretty_query }}
+                                    {{ query.query|squirrel_format_sql(highlight = true) }}
+                                    <button class="btn btn-sm hidden" data-clipboard-text="{{ query.query|squirrel_format_sql(highlight = false)|e('html_attr') }}">Copy</button>
                                 </div>
 
                                 <div id="original-query-{{ i }}-{{ loop.parent.loop.index }}" class="sql-runnable hidden">
-                                    {{ (query.sql ~ ';')|squirrel_replace_query_parameters(query.values)|squirrel_pretty_query(highlight_only = true) }}
+                                    {% set runnable_sql = (query.query ~ ';')|squirrel_replace_query_parameters(query.values) %}
+                                    {{ runnable_sql|squirrel_prettify_sql }}
+                                    <button class="btn btn-sm hidden" data-clipboard-text="{{ runnable_sql|e('html_attr') }}">Copy</button>
                                 </div>
                             </td>
                         </tr>
@@ -168,9 +182,16 @@
             var targetElement = document.getElementById(targetId);
 
             if (targetElement.style.display != 'block') {
-                Sfjs.load(targetId, link.href, null, function(xhr, el) {
-                    el.innerHTML = 'An error occurred while loading the query explanation.';
-                });
+                if (targetElement.getAttribute('data-sfurl') !== link.href) {
+                    fetch(link.href, {
+                        headers: {'X-Requested-With': 'XMLHttpRequest'}
+                    }).then(async function (response) {
+                        targetElement.innerHTML = await response.text()
+                        targetElement.setAttribute('data-sfurl', link.href)
+                    }, function () {
+                        targetElement.innerHTML = 'An error occurred while loading the query explanation.';
+                    })
+                }
 
                 targetElement.style.display = 'block';
                 link.innerHTML = 'Hide query explanation';
@@ -211,8 +232,6 @@
             });
 
             for (i = 0; i < items.length; ++i) {
-                Sfjs.removeClass(items[i], i % 2 ? 'even' : 'odd');
-                Sfjs.addClass(items[i], i % 2 ? 'odd' : 'even');
                 target.appendChild(items[i]);
             }
         }

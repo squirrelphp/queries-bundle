@@ -3,6 +3,7 @@
 namespace Squirrel\QueriesBundle\DependencyInjection\Compiler;
 
 use Squirrel\Connection\Log\ConnectionLogger;
+use Squirrel\Debug\Debug;
 use Squirrel\Queries\DB\ErrorHandler;
 use Squirrel\Queries\DB\MySQLImplementation;
 use Squirrel\Queries\DB\PostgreSQLImplementation;
@@ -12,6 +13,7 @@ use Squirrel\Queries\DBBuilderInterface;
 use Squirrel\Queries\DBInterface;
 use Squirrel\QueriesBundle\DataCollector\SquirrelDataCollector;
 use Squirrel\QueriesBundle\Twig\SquirrelQueriesExtension;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -75,7 +77,6 @@ final class LayersPass implements CompilerPassInterface
         array $tag,
         array $taggedServicesOrdered,
     ): array {
-        // Create layered definition
         $layeredConnectionDefinition = $this->createLayeredConnection(
             $container,
             $this->getBaseImplementation($container, $id, $tag),
@@ -85,13 +86,11 @@ final class LayersPass implements CompilerPassInterface
         $connectionServiceName = 'squirrel.connection.' . $tag['connectionName'];
         $builderServiceName = 'squirrel.querybuilder.' . $tag['connectionName'];
 
-        // Set connection service name - relevant if there are multiple connections
         $container->setDefinition($connectionServiceName, $layeredConnectionDefinition);
 
-        // Set query builder service name
         $builderDefinition = new Definition(DBBuilder::class, [new Reference($connectionServiceName)]);
         $container->setDefinition($builderServiceName, $builderDefinition);
-        // Services associated with this connection
+
         $servicesList = [$connectionServiceName];
 
         // If this is the default connection we enable DBInterface type hints
@@ -109,7 +108,6 @@ final class LayersPass implements CompilerPassInterface
             $servicesList[] = DBInterface::class;
         }
 
-        // Keep list of connections if we need them for profiler
         return [
             'connection' => new Reference($id),
             'services' => $servicesList,
@@ -173,8 +171,7 @@ final class LayersPass implements CompilerPassInterface
     ): void {
         $connection = $container->getDefinition($serviceId);
 
-        $loggerConnection = new Definition(ConnectionLogger::class, [$connection]);
-        $container->setDefinition($serviceId, $loggerConnection);
+        $container->setDefinition($serviceId, new Definition(ConnectionLogger::class, [$connection]));
     }
 
     // Get base implementation interacting with Squirrel Connection Service
@@ -183,7 +180,7 @@ final class LayersPass implements CompilerPassInterface
         // Connection with this name already exists - each connection name has to be unique
         if ($container->hasDefinition('squirrel.connection.' . $tag['connectionName'])) {
             throw new \LogicException(
-                'You have multiple squirrel connections with same name - ' .
+                'You have multiple squirrel connections with the name ' . Debug::sanitizeData($tag['connectionName']) . ' - ' .
                 'make sure to have unique connection names',
             );
         }
@@ -192,9 +189,9 @@ final class LayersPass implements CompilerPassInterface
             'mysql', 'mariadb' => MySQLImplementation::class,
             'pgsql' => PostgreSQLImplementation::class,
             'sqlite' => SQLiteImplementation::class,
-            default => throw new \InvalidArgumentException(
-                'Only MySQL, Postgres and SQLite are currently supported by squirrel, ' .
-                'yet you have specified none of those as the connection type.',
+            default => throw new InvalidConfigurationException(
+                'Only mysql, mariadb, pgsql and sqlite connection types are currently supported by squirrel database connections, ' .
+                'yet you have specified ' . Debug::sanitizeData($tag['connectionType']) . ' instead.',
             ),
         };
 

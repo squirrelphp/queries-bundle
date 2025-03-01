@@ -55,6 +55,7 @@ final readonly class Configuration implements ConfigurationInterface
                             ->end()
                             ->scalarNode('dbname')
                                 ->info('Default database to open and use on the server')
+                                ->defaultValue(null)
                             ->end()
                             ->arrayNode('ssl')
                                 ->children()
